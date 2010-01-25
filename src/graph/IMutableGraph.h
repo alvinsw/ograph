@@ -27,15 +27,20 @@
 template <typename V, typename E>
 class IMutableGraph : public IGraph<V, E> {
   public:
+    typedef typename IGraph<V, E>::VertexRef VertexRef;
+    typedef typename IGraph<V, E>::VertexIterator VertexIterator;
+    typedef typename IGraph<V, E>::EdgeRef EdgeRef;
+    typedef typename IGraph<V, E>::EdgeIterator EdgeIterator;
+
     virtual ~IMutableGraph() { };
     virtual void SetNoEdgeValue(const E& e) = 0;
     /** Returns a pointer to Vertex handler, do not delete the object    */
-    virtual const IVertex<V, E>& AddVertex(const V& v) = 0;
+    virtual VertexRef AddVertex(const V& v) = 0;
     virtual bool AddEdge(const V& source, const V& target, const E& edge) = 0;
     virtual bool AddEdge(const IVertex<V, E>& sourceVertex, const IVertex<V, E>& targetVertex, const E& edge) = 0;
     /** Clear all vertices and edges */
-    virtual void Clear(void) = 0;
-    virtual void RemoveAllEdges(void) = 0;
+    virtual void Clear() = 0;
+    virtual void RemoveAllEdges() = 0;
     virtual bool RemoveEdge(IEdge<V, E>& edge) = 0;
     /** For graph with parallel edges */
     virtual bool RemoveEdge(const V& source, const V& target, const E& e) = 0;

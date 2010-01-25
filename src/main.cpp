@@ -3,7 +3,10 @@
 #include "graph/DiGraphAdjMatrix.h"
 #include "Random.h"
 #include <vector>
+#include <string>
+#include <map>
 #include <stdint.h>
+
 
 struct Point {
     double x;
@@ -61,17 +64,36 @@ void GenerateNetworkGraph(IMutableGraph<Vehicle, double>& graph, std::vector< Ve
 
 int main(int argc, char** argv)
 {
-    DiGraphAdjMatrix<int, int> g;
+    typedef DiGraphAdjMatrix<int, int> graph;
+    graph g;
     for (int i=1; i < 10; ++i) {
-      const IVertex<int, int> &v = g.AddVertex(i);
+      graph::VertexRef v = g.AddVertex(i);
+      std::cout << "size: " << g.VerticesSize() << std::endl;
     }
-    Iterator< IVertex<int, int>& > i = g.Vertices();
+    graph::VertexIterator vi = g.Vertices();
+    graph::VertexRef v1 = vi.Next();
+    graph::VertexIterator vi2 = g.Vertices();
+    while (vi2.HasNext()) {
+      graph::VertexRef v2 = vi2.Next();
+      g.AddEdge(v1, v2, 9);
+      std::cout << "v2:" << v2.GetValue() << std::endl;
+    }
+    graph::VertexIterator i = g.Vertices();
+    vi = i;
     while (i.HasNext()) {
       std::cout << "test: " << i.Next().GetValue() << std::endl;
     }
-    QApplication app(argc, argv);
-    MainWindow w;
-    w.show();
-    return app.exec();
-    //std::map<int, int> m;
+    graph::EdgeIterator ei = g.Edges();
+    while (ei.HasNext()) {
+      graph::EdgeRef e = ei.Next();
+      std::cout << "edge: " << e.GetSourceValue() << "->" << e.GetTargetValue() << ":" << e.GetValue() << std::endl;
+    }
+
+    g.Clear();
+//     QApplication app(argc, argv);
+//     MainWindow w;
+//     w.show();
+//     return app.exec();
+    //std::map<int, std::string> m;
+    return 0;
 }

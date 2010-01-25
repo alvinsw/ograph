@@ -6,10 +6,10 @@ template <typename T>
 class IIterator {
 public:
     virtual ~IIterator() { };
-    virtual bool HasNext(void) = 0;
-    virtual T Next(void) = 0;
+    virtual bool HasNext() = 0;
+    virtual T Next() = 0;
     /** Returns a new object which is the exact copy of this object */
-    virtual IIterator<T>* Clone(void) = 0;
+    virtual IIterator<T>* Clone() = 0;
 };
 
 // template<typename T>
@@ -50,8 +50,10 @@ public:
     Iterator& operator=(const Iterator& iter) throw() {
         std::cout << "operator= called" << std::endl;
         if (_iterPtr == 0) {
+	  std::cout << "clone" << std::endl;
             _iterPtr = iter._iterPtr->Clone();
         } else if (this != &iter) {
+	  std::cout << "no clone" << std::endl;
             *_iterPtr = *(iter._iterPtr);
         }
         return *this;
@@ -70,11 +72,11 @@ public:
         }
     }
 
-    bool HasNext(void) {
+    bool HasNext() {
         return _iterPtr->HasNext();
     }
 
-    T Next(void) {
+    T Next() {
         return _iterPtr->Next();
     }
 
