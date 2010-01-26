@@ -70,20 +70,19 @@ int main(int argc, char** argv)
       graph::VertexRef v = g.AddVertex(i);
       std::cout << "size: " << g.VerticesSize() << std::endl;
     }
-    graph::VertexIterator vi = g.Vertices();
-    graph::VertexRef v1 = vi.Next();
-    graph::VertexIterator vi2 = g.Vertices();
+    graph::VertexIterator vi = g.GetVertices();
+    graph::Vertex& v1 = vi.Next();
+    graph::VertexIterator vi2 = g.GetVertices();
     while (vi2.HasNext()) {
       graph::VertexRef v2 = vi2.Next();
       g.AddEdge(v1, v2, 9);
       std::cout << "v2:" << v2.GetValue() << std::endl;
     }
-    graph::VertexIterator i = g.Vertices();
-    vi = i;
-    while (i.HasNext()) {
-      std::cout << "test: " << i.Next().GetValue() << std::endl;
+    vi = g.GetVertices();
+    while (vi.HasNext()) {
+      std::cout << "test: " << vi.Next().GetValue() << std::endl;
     }
-    graph::EdgeIterator ei = g.Edges();
+    graph::EdgeIterator ei = g.GetEdges();
     while (ei.HasNext()) {
       graph::EdgeRef e = ei.Next();
       std::cout << "edge: " << e.GetSourceValue() << "->" << e.GetTargetValue() << ":" << e.GetValue() << std::endl;
