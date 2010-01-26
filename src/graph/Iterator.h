@@ -49,13 +49,10 @@ public:
 
     Iterator& operator=(const Iterator& iter) throw() {
         std::cout << "operator= called" << std::endl;
-        if (_iterPtr == 0) {
-	  std::cout << "clone" << std::endl;
+	if (this != &iter) {
+	    delete _iterPtr;
             _iterPtr = iter._iterPtr->Clone();
-        } else if (this != &iter) {
-	  std::cout << "no clone" << std::endl;
-            *_iterPtr = *(iter._iterPtr);
-        }
+	}
         return *this;
     }
 
