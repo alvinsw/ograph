@@ -17,13 +17,13 @@ class IIterator {
  *  Will delete the iter object, but NOT the transformer object supplied at the constructor
  */
 template <typename T1, typename T2>
-class IIteratorTransform : public virtual IIterator<T2> {
+class IteratorTransform : public virtual IIterator<T2> {
   public:
-    explicit IIteratorTransform(IIterator<T1>* iter, ITransformer<T1,T2>& t) : _iter(iter), _t(t) {
+    explicit IteratorTransform(IIterator<T1>* iter, ITransformer<T1,T2>& t) : _iter(iter), _t(t) {
     }
-    IIteratorTransform(const IIteratorTransform& rhs) : _iter(rhs._iter->Clone()), _t(rhs._t) {
+    IteratorTransform(const IteratorTransform& rhs) : _iter(rhs._iter->Clone()), _t(rhs._t) {
     }
-    virtual ~IIteratorTransform() {
+    virtual ~IteratorTransform() {
       delete _iter;
     }
     virtual bool HasNext() {
@@ -33,10 +33,10 @@ class IIteratorTransform : public virtual IIterator<T2> {
       _t(_iter->Next());
     }
     virtual IIterator<T2>* Clone() {
-      return ( new IIteratorTransform(*this) );
+      return ( new IteratorTransform(*this) );
     }
   private:
-    IIteratorTransform() { }
+    IteratorTransform() { }
     
     IIterator<T1>* _iter;
     ITransformer<T1,T2>& _t;

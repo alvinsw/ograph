@@ -67,25 +67,34 @@ int main(int argc, char** argv)
     typedef DiGraphAdjMatrix<int, int> graph;
     graph g;
     for (int i=1; i < 10; ++i) {
-      graph::VertexRef v = g.AddVertex(i);
+      graph::VertexPtr v = g.AddVertex(i);
       std::cout << "size: " << g.VerticesSize() << std::endl;
     }
     graph::VertexIterator vi = g.GetVertices();
-    graph::Vertex& v1 = vi.Next();
+    graph::VertexPtr v1 = vi.Next();
+    graph::VertexPtr v2 = vi.Next();
+    graph::VertexPtr v3 = vi.Next();
+    graph::VertexPtr v4 = vi.Next();
+    graph::VertexPtr v5 = vi.Next();
+    graph::VertexPtr v6 = vi.Next();
+    g.AddEdge(v2, v3, 9);
+    g.AddEdge(v2, v4, 9);
+    g.AddEdge(v2, v5, 9);
+
     graph::VertexIterator vi2 = g.GetVertices();
     while (vi2.HasNext()) {
-      graph::VertexRef v2 = vi2.Next();
+      graph::VertexPtr v2 = vi2.Next();
       g.AddEdge(v1, v2, 9);
-      std::cout << "v2:" << v2.GetValue() << std::endl;
+      std::cout << "v2:" << v2->GetValue() << std::endl;
     }
     vi = g.GetVertices();
     while (vi.HasNext()) {
-      std::cout << "test: " << vi.Next().GetValue() << std::endl;
+      std::cout << "test: " << vi.Next()->GetValue() << std::endl;
     }
-    graph::EdgeIterator ei = g.GetEdges();
+    graph::EdgeIterator ei = g.GetOutEdges(v2);
     while (ei.HasNext()) {
-      graph::EdgeRef e = ei.Next();
-      std::cout << "edge: " << e.GetSourceValue() << "->" << e.GetTargetValue() << ":" << e.GetValue() << std::endl;
+      graph::EdgePtr e = ei.Next();
+      std::cout << "edge: " << e->GetSourceValue() << "->" << e->GetTargetValue() << ":" << e->GetValue() << std::endl;
     }
 
     g.Clear();

@@ -14,23 +14,28 @@ template <typename V, typename E>
 class DiGraphAdjMatrix: public AbstractDirectedGraph<V, E> {
   public:
     static uint32_t const DEFAULT_CAPACITY = 16;
-    //bool const MAINTAIN_VERTICES_ORDER;
     bool checkAddedVertex; // = true
-    //using IGraph<V, E>::VertexRef;
-    //using IGraph<V, E>::VertexIterator;
-    //using IGraph<V, E>::EdgeRef;
-    //using IGraph<V, E>::EdgeIterator;
+    //bool const MAINTAIN_VERTICES_ORDER;
+//     using IGraph<V, E>::VertexRef;
+//     using IGraph<V, E>::VertexIterator;
+//     using IGraph<V, E>::EdgeRef;
+//     using IGraph<V, E>::EdgeIterator;
     typedef typename IGraph<V, E>::Vertex Vertex;
     typedef typename IGraph<V, E>::Edge Edge;
-    typedef typename IGraph<V, E>::VertexRef VertexRef;
     typedef typename IGraph<V, E>::VertexPtr VertexPtr;
+    typedef typename IGraph<V, E>::VertexRef VertexRef;
     typedef typename IGraph<V, E>::VertexIterator VertexIterator;
+    typedef typename IGraph<V, E>::EdgePtr EdgePtr;
     typedef typename IGraph<V, E>::EdgeRef EdgeRef;
     typedef typename IGraph<V, E>::EdgeIterator EdgeIterator;
-    //using AbstractDirectedGraph<V, E>::EDGE_NONE;
 
-    DiGraphAdjMatrix ( uint32_t capacity = DEFAULT_CAPACITY, E NoEdgeValue = E() ) : AbstractDirectedGraph<V, E> ( NoEdgeValue ),
-        _verticesSize ( 0 ), _edgesSize ( 0 ), _capacity ( capacity ), checkAddedVertex ( true ), _edgesMatrix ( capacity, std::vector<E> ( capacity, NoEdgeValue ) ) { }
+    using AbstractDirectedGraph<V, E>::EDGE_NONE;
+    using AbstractDirectedGraph<V, E>::AbstractDirectedGraph;
+    DiGraphAdjMatrix ( uint32_t capacity = DEFAULT_CAPACITY, E NoEdgeValue = E() ) :
+        AbstractDirectedGraph<V, E>(NoEdgeValue),
+        _verticesSize ( 0 ), _edgesSize ( 0 ), _capacity ( capacity ), checkAddedVertex ( true ),
+        _vertexIndexer(this), _edgeIndexer(this), _edgeDummy(this), 
+        _edgesMatrix ( capacity, std::vector<E> ( capacity, NoEdgeValue ) ) { }
 
     ~DiGraphAdjMatrix() {
       //std::cout << "destructor" << std::endl;
@@ -45,18 +50,17 @@ class DiGraphAdjMatrix: public AbstractDirectedGraph<V, E> {
     }
 
     VertexPtr GetVertex ( const V& v ) const {
-      typename std::map<V, VertexImpl>::const_iterator i = _vertices.find ( v );
-
+      VerticesMapConstIter i = _vertices.find (v);
       if ( i != _vertices.end() ) {
         return & ( i->second );
       }
       return 0;
     }
 
-    const E& GetEdgeValue ( const IVertex<V, E>& sourceVertex, const IVertex<V, E>& targetVertex) const {
+    const E& GetEdgeValue (VertexRef sourceVertex, VertexRef targetVertex) const {
       if ( sourceVertex.GetOwner() == this && targetVertex.GetOwner() == this ) {
-        const VertexImpl& s = dynamic_cast<const VertexImpl&> ( sourceVertex );
-        const VertexImpl& t = dynamic_cast<const VertexImpl&> ( targetVertex );
+        VertexImplRef s = static_cast<VertexImplRef>(sourceVertex);
+        VertexImplRef s = static_cast<VertexImplRef>(targetVertex);
         return _edgesMatrix[s._index][t._index];
       } else {
         throw std::invalid_argument ( "Source or target vertex does not belong to this graph." );
@@ -64,8 +68,6 @@ class DiGraphAdjMatrix: public AbstractDirectedGraph<V, E> {
     }
 
     VertexIterator GetVertices() const {
-      //VertexIterator* vi = new VertexIterator(this);
-      //VertexIteratorImpl* vi = new VertexIteratorImpl(const_cast<DiGraphAdjMatrix*>(this));
       VertexIteratorImpl* vi = new VertexIteratorImpl ( this );
       return ( VertexIterator ( vi ) );
     }
@@ -74,61 +76,98 @@ class DiGraphAdjMatrix: public AbstractDirectedGraph<V, E> {
       EdgeIteratorImpl* ei = new EdgeIteratorImpl ( this );
       return ( EdgeIterator ( ei ) );
     }
-    
+
     //EdgeIterator GetAllEdges ( const IVertex<V, E>& vertex ) const {}
-    EdgeIterator GetInEdges ( const IVertex<V, E>& vertex ) const {}
-    EdgeIterator GetOutEdges ( const IVertex<V, E>& vertex ) const {}
+    EdgeIterator GetInEdges (VertexRef vertex) const {
+      const VertexImpl& v = AssertVertex( vertex );
+      DirEdgeIteratorImpl* ei = new DirEdgeIteratorImpl (this, v, IN);
+      return ( EdgeIterator ( ei ) );
+    }
+
+    EdgeIterator GetOutEdges (VertexRef vertex) const {
+      const VertexImpl& v = AssertVertex( vertex );
+      DirEdgeIteratorImpl* ei = new DirEdgeIteratorImpl (this, v, OUT);
+      return ( EdgeIterator ( ei ) );
+    }
 
     //VertexIterator GetAllAdjVertices ( const IVertex<V, E>& vertex ) const {}
-    VertexIterator GetPredecessor ( const IVertex<V, E>& vertex ) const {
+    VertexIterator GetPredecessor (VertexRef vertex) const {
+      const VertexImpl& v = AssertVertex( vertex );
+      DirEdgeIteratorImpl* ei = new DirEdgeIteratorImpl (this, v, IN);
+      IteratorTransform<EdgePtr, VertexPtr>* it = new IteratorTransform<EdgePtr, VertexPtr>(ei, edgeSourceVertexTransformer);
+      return ( VertexIterator ( it ) );
     }
-    VertexIterator GetSuccessor ( const IVertex<V, E>& vertex ) const {
+    VertexIterator GetSuccessor (VertexRef vertex) const {
 //       VertexIterator* vi = new VertexIterator(const_cast<DiGraphAdjMatrix*>(this));
 //       return (Iterator< IVertex<V, E>& >(vi));
       //VertexIteratorImpl* vi = new EdgeIteratorImpl ( this );
       //return VertexIterator(avi);
     }
 
-    uint32_t InDegree(const IVertex<V, E>& vertex) const {
+    uint32_t InDegree(VertexRef vertex) const {
       uint32_t c = 0;
-      const VertexImpl& v = AssertVertex( vertex );
+      VertexImplRef v = AssertVertex( vertex );
       for (int i=0; i<_verticesSize; i++) {
-	if (_edgesMatrix[i][v._index]!=this->NoEdge()) {
-	  ++c;
-	}
+        if (_edgesMatrix[i][v._index] != EDGE_NONE) {
+          ++c;
+        }
       }
       return c;
     }
-    uint32_t OutDegree(const IVertex<V, E>& vertex) const {
+    
+    uint32_t OutDegree(VertexRef vertex) const {
       uint32_t c = 0;
-      const VertexImpl& v = AssertVertex( vertex );
+      VertexImplRef v = AssertVertex( vertex );
       for (int i=0; i<_verticesSize; i++) {
-	if (_edgesMatrix[v._index][i]!=this->NoEdge()) {
-	  ++c;
-	}
+        if (_edgesMatrix[v._index][i] != EDGE_NONE) {
+          ++c;
+        }
       }
       return c;
     }
 
+    const Indexer<VertexPtr>& GetVertexIndexer() const {
+      return _vertexIndexer;
+    }
+    const Indexer<EdgePtr>& GetEdgeIndexer() const {
+      return _edgeIndexer;
+    }
 
+//////////////////////-------MUTABLE OPERATIONS----------///////////////
 
-    VertexRef AddVertex ( const V& v ) {
+    VertexPtr AddVertex (const V& v) {
+      if (_verticesSize == _capacity) { //need resize
+        //_vertices.resize();
+        _capacity = _capacity * 2;
+        //const E& edgeNone = EDGE_NONE;
+        for (int i = 0; i < _edgesMatrix.size(); ++i) {
+          _edgesMatrix[i].resize(_capacity, EDGE_NONE);
+        }
+        _edgesMatrix.resize(_capacity, std::vector<E>(_capacity, EDGE_NONE));
+      }
       //typename std::pair<typename std::map<V, VertexImpl>::iterator, bool> result = _vertices.insert ( std::pair<V, VertexImpl> ( v, VertexImpl ( this, _verticesSize, v ) ) );
-      typename std::pair<typename VerticesMap::iterator, bool> result = _vertices.insert ( std::pair<V, VertexImpl> ( v, VertexImpl ( this, _verticesSize, v ) ) );
-
-      _verticesSize++;
-      return result.first->second;
+      typename std::pair<VerticesMapIter, bool> result = _vertices.insert ( std::pair<V, VertexImpl> ( v, VertexImpl ( this, _verticesSize, v ) ) );
+      VertexPtr retptr = 0;
+      if (result.second == true) {
+        _verticesSize++;
+        retptr = &(result.first->second);
+      }
+      return retptr;
     }
 
-    bool AddEdge ( const IVertex<V, E>& sourceVertex, const IVertex<V, E>& targetVertex, const E& edge ) {
-      const VertexImpl& s = AssertVertex( sourceVertex );
-      const VertexImpl& t = AssertVertex( targetVertex );
+    EdgePtr AddEdge (VertexRef sourceVertex, VertexRef targetVertex, const E& edge ) {
+      EdgePtr ep = 0;
+      VertexImplRef s = AssertVertex( sourceVertex );
+      VertexImplRef t = AssertVertex( targetVertex );
       E& e = _edgesMatrix[s._index][t._index];
-      if ( e==this->NoEdge() && e!=edge) {
+      if ( e == EDGE_NONE && e != edge) {
         _edgesMatrix[s._index][t._index] = edge;
-        return true;
+        _edgeDummy._sv = &s; //VertexImplPtr
+        _edgeDummy._tv = &t;
+        _edgeDummy._value = &e;
+        ep = &_edgeDummy;
       }
-      return false;
+      return ep;
     }
 
     virtual void Clear() {
@@ -141,39 +180,41 @@ class DiGraphAdjMatrix: public AbstractDirectedGraph<V, E> {
     virtual void RemoveAllEdges() {
       for ( int i = 0; i < _edgesSize; i++ ) {
         for ( int j = 0; j < _edgesSize; j++ ) {
-          _edgesMatrix[i][j] = this->NoEdge();
+          _edgesMatrix[i][j] = EDGE_NONE;
         }
       }
       _edgesSize = 0;
     }
 
-    virtual bool RemoveEdge ( IEdge<V, E>& edge ) {
+    virtual bool RemoveEdge (EdgeRef edge) {
       return false;
     }
-    virtual bool RemoveEdge ( const IVertex<V, E>& sourceVertex, const IVertex<V, E>& targetVertex, const E& e ) {
+    virtual bool RemoveEdge (VertexRef sourceVertex, VertexRef targetVertex, const E& e ) {
       return false;
     }
-    virtual bool RemoveEdges ( const IVertex<V, E>& sourceVertex, const IVertex<V, E>& targetVertex ) {
+    virtual bool RemoveEdges (VertexRef sourceVertex, VertexRef targetVertex) {
       return false;
     }
-    virtual bool RemoveVertex ( IVertex<V, E>& v ) {
+    virtual bool RemoveVertex (VertexRef v) {
       return false;
     }
-
 
   private:
+
     class VertexImpl;
     friend class DiGraphAdjMatrix::VertexImpl;
     class VertexImpl : public IVertex<V, E> {
       public:
         VertexImpl (DiGraphAdjMatrix* const owner, uint32_t index, const V& value ) : _owner ( owner ), _index ( index ), _value ( value ) { }
         ~VertexImpl() { }
-        const V& GetValue () const {
-          return _value;
-        }
-        IGraph<V, E>* GetOwner () const {
-          return _owner;
-        }
+        const V& GetValue () const { return _value; }
+        IGraph<V, E>* GetOwner () const { return _owner; }
+        VertexImpl* Clone() const { return new VertexImpl(*this); }
+        bool Equals(const IBase& obj) const {
+
+
+        };
+        //operator uint32_t() const { return _index;}
       private:
         V _value;
         uint32_t _index;
@@ -189,29 +230,38 @@ class DiGraphAdjMatrix: public AbstractDirectedGraph<V, E> {
         ~EdgeImpl() { }
         const E& GetValue() const { return *_value; }
         IGraph<V, E>* GetOwner() const { return const_cast< DiGraphAdjMatrix* >(_owner); }
-        const IVertex<V, E>& GetSourceVertex() const { return *_sv; }
-        const IVertex<V, E>& GetTargetVertex() const { return *_tv; }
+        VertexPtr GetSourceVertex() const { return _sv; }
+        VertexPtr GetTargetVertex() const { return _tv; }
+        EdgeImpl* Clone() const { return new EdgeImpl(*this); }
+        bool Equals(const IBase& obj) const {
+
+
+        }
       private:
         const E* _value;
         const VertexImpl* _sv;
         const VertexImpl* _tv;
         const DiGraphAdjMatrix* _owner;
+        
+        friend class DiGraphAdjMatrix;
         friend class DiGraphAdjMatrix::EdgeIteratorImpl;
+        friend class DiGraphAdjMatrix::DirEdgeIteratorImpl;
     };
 
     class VertexIteratorImpl;
     friend class DiGraphAdjMatrix::VertexIteratorImpl;
-    class VertexIteratorImpl : public IIterator< const IVertex<V, E>& > {
+
+    class VertexIteratorImpl : public IIterator<VertexPtr> {
       public:
         VertexIteratorImpl ( const DiGraphAdjMatrix* owner ) : _cursor ( owner->_vertices.begin() ), _end ( owner->_vertices.end() ) { }
         ~VertexIteratorImpl() { }
         bool HasNext () {
           return ( _cursor != _end );
         }
-        const IVertex<V, E>& Next () {
-          const IVertex<V, E>* v = &_cursor->second;
+        VertexPtr Next () {
+          VertexPtr v = &_cursor->second;
           ++_cursor;
-          return *v;
+          return v;
         }
         /** Returns a new object which is the exact copy of this object */
         VertexIteratorImpl* Clone () {
@@ -219,15 +269,15 @@ class DiGraphAdjMatrix: public AbstractDirectedGraph<V, E> {
         }
       private:
         //const DiGraphAdjMatrix* _owner;
-        /*        typename std::map<V, Vertex>::iterator _cursor;
-                typename std::map<V, Vertex>::iterator _end;*/
-        typename std::map<V, VertexImpl>::const_iterator _cursor;
-        typename std::map<V, VertexImpl>::const_iterator _end;
+        VerticesMapConstIter _cursor;
+        VerticesMapConstIter _end;
+//         typename std::map<V, VertexImpl>::const_iterator _cursor;
+//         typename std::map<V, VertexImpl>::const_iterator _end;
     };
 
     class EdgeIteratorImpl;
     friend class DiGraphAdjMatrix::EdgeIteratorImpl;
-    class EdgeIteratorImpl : public IIterator< EdgeRef > {
+    class EdgeIteratorImpl : public IIterator<EdgePtr> {
       public:
         EdgeIteratorImpl (const DiGraphAdjMatrix* owner ) : _begin ( owner->_vertices.begin() ), _cursor1(_begin), _cursor2(_begin), _end ( owner->_vertices.end() ), _edge(owner), _owner(owner) {
           NextEdge();
@@ -239,7 +289,7 @@ class DiGraphAdjMatrix: public AbstractDirectedGraph<V, E> {
         bool HasNext () {
           return ( _cursor1 != _end );
         }
-        EdgeRef Next () {
+        EdgePtr Next () {
           _edge._sv = &(_cursor1->second);
           _edge._tv = &(_cursor2->second);
           _edge._value = &(_owner->_edgesMatrix[_cursor1->second._index][_cursor2->second._index]);
@@ -249,7 +299,7 @@ class DiGraphAdjMatrix: public AbstractDirectedGraph<V, E> {
             ++_cursor1;
           }
           NextEdge();
-          return _edge;
+          return &_edge;
         }
         /** Returns a new object which is the exact copy of this object */
         EdgeIteratorImpl* Clone ( ) {
@@ -265,9 +315,6 @@ class DiGraphAdjMatrix: public AbstractDirectedGraph<V, E> {
             }
           }
         }
-        //const DiGraphAdjMatrix* _owner;
-        /*        typename std::map<V, Vertex>::iterator _cursor;
-                typename std::map<V, Vertex>::iterator _end;*/
         typename std::map<V, VertexImpl>::const_iterator _begin;
         typename std::map<V, VertexImpl>::const_iterator _cursor1;
         typename std::map<V, VertexImpl>::const_iterator _cursor2;
@@ -276,16 +323,136 @@ class DiGraphAdjMatrix: public AbstractDirectedGraph<V, E> {
         const DiGraphAdjMatrix* _owner;
     };
 
+    class DirEdgeIteratorImpl;
+    friend class DiGraphAdjMatrix::DirEdgeIteratorImpl;
+    class DirEdgeIteratorImpl : public IIterator<EdgePtr> {
+      public:
+        //enum EdgeDirection {IN = 0, OUT = 1};
+        DirEdgeIteratorImpl (const DiGraphAdjMatrix* owner, const VertexImpl& vertex, EdgeDirection dir)
+            : _begin ( owner->_vertices.begin() ), _end ( owner->_vertices.end() ), _cursor(_begin),
+            _owner(owner), _source(vertex), _edge(owner), _dir(dir) {
+          NextEdge();
+          Init(&_source);
+        }
+        /** Copy Constructor */
+        OutEdgeIteratorImpl ( OutEdgeIteratorImpl* e ) : _begin(e->_begin), _end(e->_end), _cursor(e->_cursor),
+            _owner(e->_owner), _source(e->_source), _edge(e->_edge), _dir(e->_dir) {
+          NextEdge();
+          Init(&_source);
+        }
+        ~OutEdgeIteratorImpl() { }
+
+        bool HasNext () {
+          return ( _cursor != _end );
+        }
+        EdgePtr Next () {
+//           VertexImplPtr row[] = {&(_cursor->second), &_source};
+//           VertexImplPtr col[] = {&_source, &(_cursor->second)};
+          _rowid[IN] = &_cursor->second;
+          _colid[OUT] = &_cursor->second;
+          _edge._sv = _rowid[_dir];
+          _edge._tv = _colid[_dir];
+          _edge._value = &(_owner->_edgesMatrix[_rowid[_dir]->_index][_colid[_dir]->_index]);
+//           _edge._sv = &_source;
+//           _edge._tv = &(_cursor->second);
+//          _edge._value = &(_owner->_edgesMatrix[_source._index][_cursor->second._index]);
+          ++_cursor;
+          NextEdge();
+          return &_edge;
+        }
+        /** Returns a new object which is the exact copy of this object */
+        OutEdgeIteratorImpl* Clone ( ) {
+          return ( new OutEdgeIteratorImpl ( *this ) );
+        }
+      private:
+        void Init(VertexImplPtr v) {
+          _colid[IN] = v;
+          _rowid[OUT] = v;
+        }
+        void NextEdge() {
+          _rowid[IN] = &_cursor->second;
+          _colid[OUT] = &_cursor->second;
+          while ((_cursor != _end) && (_owner->_edgesMatrix[_rowid[_dir]->_index][_colid[_dir]->_index] == EDGE_NONE)) {
+            ++_cursor;
+          }
+        }
+        typename std::map<V, VertexImpl>::const_iterator _begin;
+        typename std::map<V, VertexImpl>::const_iterator _end;
+        typename std::map<V, VertexImpl>::const_iterator _cursor;
+        const DiGraphAdjMatrix* _owner;
+        const VertexImpl& _source;
+        EdgeImpl _edge;
+        VertexImplPtr _rowid[2];
+        VertexImplPtr _colid[2];
+        EdgeDirection _dir;
+    };
+
+
+    class VertexIndexer : public Indexer<VertexPtr> {
+      public:
+        VertexIndexer(const DiGraphAdjMatrix* g) : _owner(g) {}
+        uint32_t operator()(const VertexPtr& t) const {
+          const VertexImpl& v = _owner->AssertVertex(*t);
+          return v._index;
+        }
+        uint32_t GetLastIndex() const {
+          return (_owner->_verticesSize)-1;
+        }
+        const DiGraphAdjMatrix* _owner;
+    };
+    const VertexIndexer _vertexIndexer;
+
+    class EdgeIndexer : public Indexer<EdgePtr> {
+      public:
+        EdgeIndexer(const DiGraphAdjMatrix* g) : _owner(g) {}
+        uint32_t operator()(const EdgePtr& t) const {
+          const VertexImpl& v1 = _owner->AssertVertex(*(t->GetSourceVertex()));
+          const VertexImpl& v2 = _owner->AssertVertex(*(t->GetTargetVertex()));
+          return (v1._index * _owner->_verticesSize) + v2._index;
+        }
+        uint32_t GetLastIndex() const {
+          return ((_owner->_verticesSize) * (_owner->_verticesSize))-1;
+        }
+        const DiGraphAdjMatrix* _owner;
+    };
+    const EdgeIndexer _edgeIndexer;
+
+    class EdgeSourceVertexTransformer : public ITransformer<EdgePtr, VertexPtr> {
+      public:
+        VertexPtr operator()(const EdgePtr& t1) const {
+          return t1->GetSourceVertex();
+        }
+    };
+    const EdgeSourceVertexTransformer edgeSourceVertexTransformer;
+
+    class EdgeTargetVertexTransformer : public ITransformer<EdgePtr, VertexPtr> {
+      public:
+        VertexPtr operator()(const EdgePtr& t1) const {
+          return t1->GetTargetVertex();
+        }
+    };
+    const EdgeTargetVertexTransformer edgeTargetVertexTransformer;
+
     const VertexImpl& AssertVertex(VertexRef v) const {
-      if ( v.GetOwner() == this ) {
-        return dynamic_cast<const VertexImpl&> ( v );
+      if (v.GetOwner() == this ) {
+        return static_cast<VertexImplRef>(v);
       } else {
-        throw std::invalid_argument ( "Vertex does not belong to this graph." );
+        throw std::invalid_argument ("Vertex does not belong to this graph." );
+      }
+    }
+    const VertexImpl& AssertVertex(VertexPtr v) const {
+      if (v != 0 && v.GetOwner() == this ) {
+        return *(static_cast<VertexImplPtr>(v));
+      } else {
+        throw std::invalid_argument ("Null pointer or vertex does not belong to this graph." );
       }
     }
 
+    typedef const VertexImpl* VertexImplPtr;
+    typedef const VertexImpl& VertexImplRef;
     typedef std::map<V, VertexImpl> VerticesMap;
     typedef typename std::map<V, VertexImpl>::iterator VerticesMapIter;
+    typedef typename std::map<V, VertexImpl>::const_iterator VerticesMapConstIter;
 
     ////////////////Private data members//////////////////
     /** number of vertices */
@@ -294,10 +461,14 @@ class DiGraphAdjMatrix: public AbstractDirectedGraph<V, E> {
     uint32_t _edgesSize;
     /** number of max vertices */
     uint32_t _capacity;
+    EdgeImpl _edgeDummy;
 
+    /// STORAGE
     /** the adj matrix */
     std::vector< std::vector<E> > _edgesMatrix;
     VerticesMap _vertices;
+
+    enum EdgeDirection {IN = 0, OUT = 1};
 
 };
 

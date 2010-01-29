@@ -27,36 +27,43 @@
 template <typename V, typename E>
 class IMutableGraph : public virtual IGraph<V, E> {
   public:
-    typedef typename IGraph<V, E>::Vertex Vertex;
-    typedef typename IGraph<V, E>::Edge Edge;
+    typedef typename IGraph<V, E>::VertexPtr VertexPtr;
     typedef typename IGraph<V, E>::VertexRef VertexRef;
-    typedef typename IGraph<V, E>::VertexIterator VertexIterator;
+    typedef typename IGraph<V, E>::EdgePtr EdgePtr;
     typedef typename IGraph<V, E>::EdgeRef EdgeRef;
-    typedef typename IGraph<V, E>::EdgeIterator EdgeIterator;
 
     virtual ~IMutableGraph() { };
+    
     virtual void SetNoEdgeValue(const E& e) = 0;
+    
     /** Returns a pointer to Vertex handler, do not delete the object    */
-    virtual Vertex& AddVertex(const V& v) = 0;
-    virtual bool AddEdge(const V& source, const V& target, const E& edge) = 0;
-    virtual bool AddEdge(const IVertex<V, E>& sourceVertex, const IVertex<V, E>& targetVertex, const E& edge) = 0;
+    virtual VertexPtr AddVertex(const V& v) = 0;
+    
+    /** 
+      * Returns a pointer to a dummy internal edge object. It is only used as a mean to get the VertexPtr of source and target and the value
+      * Copy the edge object values to other variables before calling any other methods that involve returning an edge.
+      */
+    virtual EdgePtr AddEdge(const V& source, const V& target, const E& edge) = 0;
+    virtual EdgePtr AddEdge(VertexRef sourceVertex, VertexRef targetVertex, const E& edge) = 0;
+    
     /** Clear all vertices and edges */
     virtual void Clear() = 0;
     virtual void RemoveAllEdges() = 0;
-    virtual bool RemoveEdge(IEdge<V, E>& edge) = 0;
+    virtual bool RemoveEdge(EdgeRef edge) = 0;
+    
     /** For graph with parallel edges */
     virtual bool RemoveEdge(const V& source, const V& target, const E& e) = 0;
+    /** For graph with parallel edges */
+    virtual bool RemoveEdge(VertexRef sourceVertex, VertexRef targetVertex, const E& e) = 0;
+    
     /** Remove all the edges from source to target */
     virtual bool RemoveEdges(const V& source, const V& target) = 0;
-    /** For graph with parallel edges */
-    virtual bool RemoveEdge(const IVertex<V, E>& sourceVertex, const IVertex<V, E>& targetVertex, const E& e) = 0;
     /** Remove all the edges from source to target */
-    virtual bool RemoveEdges(const IVertex<V, E>& sourceVertex, const IVertex<V, E>& targetVertex) = 0;
-    virtual bool RemoveVertex(const V& v) = 0;
-    virtual bool RemoveVertex(IVertex<V, E>& vertex) = 0;
+    virtual bool RemoveEdges(VertexRef sourceVertex, VertexRef targetVertex) = 0;
     
-    //using IGraph<V, E>::GetVertex;
-
+    virtual bool RemoveVertex(const V& v) = 0;
+    virtual bool RemoveVertex(VertexRef vertex) = 0;
+    
 };
 
 #endif // I_MUTABLEGRAPH_H
