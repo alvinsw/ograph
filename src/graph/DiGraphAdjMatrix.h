@@ -30,12 +30,13 @@ class DiGraphAdjMatrix: public AbstractDirectedGraph<V, E> {
     typedef typename IGraph<V, E>::EdgeIterator EdgeIterator;
 
     using AbstractDirectedGraph<V, E>::EDGE_NONE;
-    using AbstractDirectedGraph<V, E>::AbstractDirectedGraph;
+    //using AbstractDirectedGraph<V, E>::AbstractDirectedGraph;
     DiGraphAdjMatrix ( uint32_t capacity = DEFAULT_CAPACITY, E NoEdgeValue = E() ) :
         AbstractDirectedGraph<V, E>(NoEdgeValue),
         _verticesSize ( 0 ), _edgesSize ( 0 ), _capacity ( capacity ), checkAddedVertex ( true ),
         _vertexIndexer(this), _edgeIndexer(this), _edgeDummy(this), 
-        _edgesMatrix ( capacity, std::vector<E> ( capacity, NoEdgeValue ) ) { }
+        _edgesMatrix ( capacity, std::vector<E> ( capacity, NoEdgeValue ) ),
+        edgeSourceVertexTransformer(), edgeTargetVertexTransformer() { }
 
     ~DiGraphAdjMatrix() {
       //std::cout << "destructor" << std::endl;
@@ -60,7 +61,7 @@ class DiGraphAdjMatrix: public AbstractDirectedGraph<V, E> {
     const E& GetEdgeValue (VertexRef sourceVertex, VertexRef targetVertex) const {
       if ( sourceVertex.GetOwner() == this && targetVertex.GetOwner() == this ) {
         VertexImplRef s = static_cast<VertexImplRef>(sourceVertex);
-        VertexImplRef s = static_cast<VertexImplRef>(targetVertex);
+        VertexImplRef t = static_cast<VertexImplRef>(targetVertex);
         return _edgesMatrix[s._index][t._index];
       } else {
         throw std::invalid_argument ( "Source or target vertex does not belong to this graph." );
@@ -253,6 +254,7 @@ class DiGraphAdjMatrix: public AbstractDirectedGraph<V, E> {
 
     class VertexIteratorImpl : public IIterator<VertexPtr> {
       public:
+        typedef typename DiGraphAdjMatrix<V, E>::VerticesMapConstIter VerticesMapConstIter;
         VertexIteratorImpl ( const DiGraphAdjMatrix* owner ) : _cursor ( owner->_vertices.begin() ), _end ( owner->_vertices.end() ) { }
         ~VertexIteratorImpl() { }
         bool HasNext () {
@@ -327,6 +329,8 @@ class DiGraphAdjMatrix: public AbstractDirectedGraph<V, E> {
     friend class DiGraphAdjMatrix::DirEdgeIteratorImpl;
     class DirEdgeIteratorImpl : public IIterator<EdgePtr> {
       public:
+        typedef typename DiGraphAdjMatrix<V, E>::EdgeDirection EdgeDirection;
+        typedef typename DiGraphAdjMatrix<V, E>::VertexImplPtr VertexImplPtr;
         //enum EdgeDirection {IN = 0, OUT = 1};
         DirEdgeIteratorImpl (const DiGraphAdjMatrix* owner, const VertexImpl& vertex, EdgeDirection dir)
             : _begin ( owner->_vertices.begin() ), _end ( owner->_vertices.end() ), _cursor(_begin),
@@ -335,12 +339,12 @@ class DiGraphAdjMatrix: public AbstractDirectedGraph<V, E> {
           Init(&_source);
         }
         /** Copy Constructor */
-        OutEdgeIteratorImpl ( OutEdgeIteratorImpl* e ) : _begin(e->_begin), _end(e->_end), _cursor(e->_cursor),
+        DirEdgeIteratorImpl ( DirEdgeIteratorImpl* e ) : _begin(e->_begin), _end(e->_end), _cursor(e->_cursor),
             _owner(e->_owner), _source(e->_source), _edge(e->_edge), _dir(e->_dir) {
           NextEdge();
           Init(&_source);
         }
-        ~OutEdgeIteratorImpl() { }
+        ~DirEdgeIteratorImpl() { }
 
         bool HasNext () {
           return ( _cursor != _end );
@@ -361,8 +365,8 @@ class DiGraphAdjMatrix: public AbstractDirectedGraph<V, E> {
           return &_edge;
         }
         /** Returns a new object which is the exact copy of this object */
-        OutEdgeIteratorImpl* Clone ( ) {
-          return ( new OutEdgeIteratorImpl ( *this ) );
+        DirEdgeIteratorImpl* Clone ( ) {
+          return ( new DirEdgeIteratorImpl ( *this ) );
         }
       private:
         void Init(VertexImplPtr v) {
@@ -372,7 +376,7 @@ class DiGraphAdjMatrix: public AbstractDirectedGraph<V, E> {
         void NextEdge() {
           _rowid[IN] = &_cursor->second;
           _colid[OUT] = &_cursor->second;
-          while ((_cursor != _end) && (_owner->_edgesMatrix[_rowid[_dir]->_index][_colid[_dir]->_index] == EDGE_NONE)) {
+          while ((_cursor != _end) && (_owner->_edgesMatrix[_rowid[_dir]->_index][_colid[_dir]->_index] == _owner->EDGE_NONE)) {
             ++_cursor;
           }
         }

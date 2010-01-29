@@ -19,7 +19,7 @@ class IIterator {
 template <typename T1, typename T2>
 class IteratorTransform : public virtual IIterator<T2> {
   public:
-    explicit IteratorTransform(IIterator<T1>* iter, ITransformer<T1,T2>& t) : _iter(iter), _t(t) {
+    explicit IteratorTransform(IIterator<T1>* iter, const ITransformer<T1,T2>& t) : _iter(iter), _t(t) {
     }
     IteratorTransform(const IteratorTransform& rhs) : _iter(rhs._iter->Clone()), _t(rhs._t) {
     }
@@ -39,7 +39,7 @@ class IteratorTransform : public virtual IIterator<T2> {
     IteratorTransform() { }
     
     IIterator<T1>* _iter;
-    ITransformer<T1,T2>& _t;
+    const ITransformer<T1,T2>& _t;
 };
 // template<typename T>
 // struct IteratorRef

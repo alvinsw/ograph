@@ -39,7 +39,7 @@ void GenerateNetworkGraph(IMutableGraph<Vehicle, double>& graph, std::vector< Ve
         v.radioRangeSqr = v.radioRangeSqr * v.radioRangeSqr;
         v.delayConstraint = 100 + rnd.NextInt(100);
         v.delay = 1 + rnd.NextInt(100);
-	VertexPtr vptr = &graph.AddVertex(v);
+	VertexPtr vptr = graph.AddVertex(v);
         vehicles.push_back(vptr);
     }
     for (int i=0; i<num; ++i) {
@@ -77,21 +77,21 @@ int main(int argc, char** argv)
     graph::VertexPtr v4 = vi.Next();
     graph::VertexPtr v5 = vi.Next();
     graph::VertexPtr v6 = vi.Next();
-    g.AddEdge(v2, v3, 9);
-    g.AddEdge(v2, v4, 9);
-    g.AddEdge(v2, v5, 9);
+    g.AddEdge(*v2, *v3, 9);
+    g.AddEdge(*v2, *v4, 9);
+    g.AddEdge(*v2, *v5, 9);
 
     graph::VertexIterator vi2 = g.GetVertices();
     while (vi2.HasNext()) {
       graph::VertexPtr v2 = vi2.Next();
-      g.AddEdge(v1, v2, 9);
+      g.AddEdge(*v1, *v2, 9);
       std::cout << "v2:" << v2->GetValue() << std::endl;
     }
     vi = g.GetVertices();
     while (vi.HasNext()) {
       std::cout << "test: " << vi.Next()->GetValue() << std::endl;
     }
-    graph::EdgeIterator ei = g.GetOutEdges(v2);
+    graph::EdgeIterator ei = g.GetOutEdges(*v2);
     while (ei.HasNext()) {
       graph::EdgePtr e = ei.Next();
       std::cout << "edge: " << e->GetSourceValue() << "->" << e->GetTargetValue() << ":" << e->GetValue() << std::endl;

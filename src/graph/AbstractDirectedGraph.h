@@ -21,7 +21,7 @@ class AbstractDirectedGraph : public IMutableGraph<V, E> {
     typedef typename IGraph<V, E>::VertexPtr VertexPtr;
     typedef typename IGraph<V, E>::VertexRef VertexRef;
     typedef typename IGraph<V, E>::VertexIterator VertexIterator;
-    typedef typename IGraph<V, E>::VertexPtr EdgePtr;
+    typedef typename IGraph<V, E>::EdgePtr EdgePtr;
     typedef typename IGraph<V, E>::EdgeRef EdgeRef;
     typedef typename IGraph<V, E>::EdgeIterator EdgeIterator;
 

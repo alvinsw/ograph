@@ -36,8 +36,8 @@ class IEdge : public IBase {
     virtual IGraph<V, E>* GetOwner() const = 0;
     virtual VertexPtr GetSourceVertex() const = 0;
     virtual VertexPtr GetTargetVertex() const = 0;
-    virtual const V& GetSourceValue() const { return GetSourceVertex().GetValue(); }
-    virtual const V& GetTargetValue() const { return GetTargetVertex().GetValue(); }
+    virtual const V& GetSourceValue() const { return GetSourceVertex()->GetValue(); }
+    virtual const V& GetTargetValue() const { return GetTargetVertex()->GetValue(); }
 };
 
 template <typename T>
