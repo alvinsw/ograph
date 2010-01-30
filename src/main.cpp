@@ -7,7 +7,6 @@
 #include <map>
 #include <stdint.h>
 
-
 struct Point {
     double x;
     double y;
@@ -66,35 +65,40 @@ int main(int argc, char** argv)
 {
     typedef DiGraphAdjMatrix<int, int> graph;
     graph g;
-    for (int i=1; i < 10; ++i) {
-      graph::VertexPtr v = g.AddVertex(i);
+    int count = 10;
+    graph::VertexPtr vptr[count];
+    for (int i=0; i < count; ++i) {
+      vptr[i] = g.AddVertex(i);
       std::cout << "size: " << g.VerticesSize() << std::endl;
     }
-    graph::VertexIterator vi = g.GetVertices();
-    graph::VertexPtr v1 = vi.Next();
-    graph::VertexPtr v2 = vi.Next();
-    graph::VertexPtr v3 = vi.Next();
-    graph::VertexPtr v4 = vi.Next();
-    graph::VertexPtr v5 = vi.Next();
-    graph::VertexPtr v6 = vi.Next();
-    g.AddEdge(*v2, *v3, 9);
-    g.AddEdge(*v2, *v4, 9);
-    g.AddEdge(*v2, *v5, 9);
 
-    graph::VertexIterator vi2 = g.GetVertices();
-    while (vi2.HasNext()) {
-      graph::VertexPtr v2 = vi2.Next();
-      g.AddEdge(*v1, *v2, 9);
-      std::cout << "v2:" << v2->GetValue() << std::endl;
+    graph::VertexIterator vi = g.GetVertices();
+    while (vi.HasNext()) {
+      graph::VertexPtr v = vi.Next();
+      graph::EdgePtr e = g.AddEdge(*vptr[0], *v, 9);
+      std::cout << "add edge: " << *e << std::endl;
     }
+    
+    std::cout << "v size: " << g.VerticesSize() << std::endl;
+    std::cout << "e size: " << g.EdgesSize() << std::endl;
+    //g.Clear();
+    std::cout << "v size: " << g.VerticesSize() << std::endl;
+    std::cout << "e size: " << g.EdgesSize() << std::endl;
     vi = g.GetVertices();
     while (vi.HasNext()) {
-      std::cout << "test: " << vi.Next()->GetValue() << std::endl;
+      std::cout << "vertex: " << vi.Next()->GetValue() << std::endl;
     }
-    graph::EdgeIterator ei = g.GetOutEdges(*v2);
+    //std::cout << "v2=" << v2->GetValue() <<std::endl;
+    g.AddEdge(*vptr[3], *vptr[1], 7);
+    g.AddEdge(*vptr[3], *vptr[5], 7);
+    g.AddEdge(*vptr[3], *vptr[8], 7);
+    //g.Debug();
+    graph::EdgeIterator ei = g.GetOutEdges(*vptr[3]);
+    //graph::EdgeIterator ei = g.GetEdges();
+    //std::cout << "test1" << std::endl;
     while (ei.HasNext()) {
       graph::EdgePtr e = ei.Next();
-      std::cout << "edge: " << e->GetSourceValue() << "->" << e->GetTargetValue() << ":" << e->GetValue() << std::endl;
+      std::cout << *e << std::endl;
     }
 
     g.Clear();

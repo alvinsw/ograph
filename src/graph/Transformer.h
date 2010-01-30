@@ -23,7 +23,7 @@ template <typename T>
 class AnyToUInt32Transformer : public ITransformer<T, uint32_t> {
   public:
     ~AnyToUInt32Transformer() {
-      std::cout << "test destructor" << std::endl;
+      //std::cout << "AnyToUInt32Transformer: test destructor" << std::endl;
     }
     uint32_t operator()(const T& t) const {
       return uint32_t(t);

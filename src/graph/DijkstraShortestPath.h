@@ -48,11 +48,14 @@ class DijkstraShortestPath {
   //typedef typename ET::instanceOfTransformer ET_extends_ITransformer;
   public:
     typedef IVertex<V, E> Vertex;
+    typedef IEdge<V, E> Edge;
     typedef const IVertex<V, E>* VertexPtr;
     typedef const IVertex<V, E>& VertexRef;
-    typedef IEdge<V, E> Edge;
+    typedef Iterator< VertexPtr > VertexIterator;
     typedef const IEdge<V, E>* EdgePtr;
     typedef const IEdge<V, E>& EdgeRef;
+    typedef Iterator< EdgePtr > EdgeIterator;
+    enum Color { WHITE=0, GRAY=1, BLACK=2 };
     
     /** 
      * User can supply a customized created PriorityQueue object in pq parameter. 
@@ -60,14 +63,14 @@ class DijkstraShortestPath {
      * Example: DijkstraShortestPath dsp(graph, marker, new XXXPriorityQueue(p1,p1,xxx));
      */
     DijkstraShortestPath(const IGraph<V, E>& g, const IMarker<EdgePtr, W>* edgeWeightMarker = 0, const TPQParams* pqp = 0) 
-                         : _g(&g), _ewm(edgeWeightMarker), INFINITY(std::numeric_limits<W>::max())
+                         : _g(&g), _ewm(edgeWeightMarker), INFINITY(std::numeric_limits<W>::max()), defaultEdgeWeightMarker()
     {
       if (pqp==0) { 
         _pq = TPriorityQueue(TPQParams(g.GetVertexIndexer()));
       } else {
         _pq = TPriorityQueue(*pqp);
       }
-      if (_ewm==0) { _ewm == &defaultEdgeWeightMarker; }
+      if (_ewm==0) { _ewm = &defaultEdgeWeightMarker; }
       //INFINITY = ;
     }
     
@@ -78,48 +81,57 @@ class DijkstraShortestPath {
 //              IVisitor<V>& discoverVertex = _vv, IVisitor<E>& edgeRelaxed = _ev, IVisitor<E>& edgeNotRelaxed = _ev, IVisitor<V>& finishVertex = _vv) {
     void Run(const IVertex<V, E>& s) {
       const Indexer<VertexPtr>* indexer = &_g->GetVertexIndexer();
-      uint32_t size = indexer->GetLastIndex();
+      uint32_t size = indexer->GetLastIndex()+1;
       TVertexMarker<VertexPtr, W> dist(size, indexer); // distance marker
       TVertexMarker<VertexPtr, VertexPtr> prev(size, indexer); // predecessor marker
-      TVertexMarker<VertexPtr, bool> visited(size, indexer); // visited marker
+      TVertexMarker<VertexPtr, Color> visited(size, indexer); // visited marker
       // init
-      Iterator< const IVertex<V, E>& > i = _g->GetVertices();
-      const IVertex<V, E>* sptr = &s;
+      VertexIterator i = _g->GetVertices();
+      VertexPtr sptr = &s;
       while (i.HasNext()) {
-        const IVertex<V, E>* vptr = &i.Next();
+        VertexPtr vptr = i.Next();
         dist.Set(vptr, INFINITY);
         prev.Set(vptr, 0);
-        visited.Set(vptr, false);
-        //_pq.Push(v, d.Get(v)); //test
-        //std::cout << "test:" << v->GetValue() << " - " << x << std::endl;
-        //_pq.Push(v, x); //test
-        //x /= 2.0f;
+        visited.Set(vptr, WHITE);
       }
-      visited.Set(sptr, true);
       dist.Set(sptr, 0);
       _pq.Push(sptr, 0);
       while (!_pq.Empty()){
-        const IVertex<V, E>* uptr = _pq.Poll(); //vertex in Q with smallest dist[]
+        VertexPtr uptr = _pq.Poll(); //vertex in Q with smallest dist[]
         if (dist.Get(uptr) == INFINITY) break; // all remaining vertices are inaccessible from source
+        visited.Set(uptr, BLACK); // put in the finished set S<--u
         // for each
-        Iterator< const IEdge<V, E>& > iter = _g->GetOutEdges(*uptr);
+        EdgeIterator iter = _g->GetOutEdges(*uptr);
         while (iter.HasNext()) {
-          const IEdge<V, E>* eptr = &iter.Next();
-          const IVertex<V, E>* vptr = &eptr->GetTargetVertex();
-          if (visited.Get(vptr) == false) {
+          EdgePtr eptr = iter.Next();
+          VertexPtr vptr = eptr->GetTargetVertex();
+          Color color = visited.Get(vptr);
+          if (color != BLACK) {
             W alt = dist.Get(uptr) + _ewm->Get(eptr);
             if (alt < dist.Get(vptr)) {             // Relax (u,v,a)
               dist.Set(vptr, alt);
               prev.Set(vptr, uptr);
-              _pq.Update(vptr, alt);
-            }            
+              if (color == WHITE) {
+                visited.Set(vptr, GRAY);
+                _pq.Push(vptr, alt);
+              } else { //else if gray
+                _pq.Update(vptr, alt);
+              }
+            }
           }
-          
         } //end for each
 
-        std::cout << "test:" << _pq.Poll()->GetValue() << std::endl;
+        //std::cout << "test:" << _pq.Poll()->GetValue() << std::endl;
       }
-      
+      VertexIterator it =  _g->GetVertices();
+//  std::cout << "X1" << std::endl;
+      while (it.HasNext()) {
+        VertexPtr v = it.Next();
+        V val;
+        VertexPtr vp = prev.Get(v);
+        if (vp!=0) val = vp->GetValue();
+        std::cout << "v:" << v->GetValue() << " - p:" << val << std::endl;
+      }
     }
     
 //     class DefaultVertexVisitor : public IVisitor<V> {
@@ -137,10 +149,12 @@ class DijkstraShortestPath {
     
     class DefaultEdgeWeightMarker : public IMarker<EdgePtr, W> {
       public:
-        W Get(const EdgePtr& key) const { return W(key->GetValue()); }
+        W Get(const EdgePtr& key) const { 
+          return W(key->GetValue()); 
+        }
         void Set(const EdgePtr& key, const W& value) { }
     };
-    DefaultEdgeWeightMarker defaultEdgeWeightMarker;
+    const DefaultEdgeWeightMarker defaultEdgeWeightMarker;
     
 /*    class VertexPtrToUInt32Transformer : public ITransformer<IVertex<V, E>*, uint32_t> {
       public:

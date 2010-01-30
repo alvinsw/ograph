@@ -34,10 +34,13 @@ class DiGraphAdjMatrix: public AbstractDirectedGraph<V, E> {
     DiGraphAdjMatrix ( uint32_t capacity = DEFAULT_CAPACITY, E NoEdgeValue = E() ) :
         AbstractDirectedGraph<V, E>(NoEdgeValue),
         _verticesSize ( 0 ), _edgesSize ( 0 ), _capacity ( capacity ), checkAddedVertex ( true ),
-        _vertexIndexer(this), _edgeIndexer(this), _edgeDummy(this), 
+        _vertexIndexer(0), _edgeIndexer(0), _edgeDummy(0), 
         _edgesMatrix ( capacity, std::vector<E> ( capacity, NoEdgeValue ) ),
         edgeSourceVertexTransformer(), edgeTargetVertexTransformer() 
     {
+      _vertexIndexer = this;
+      _edgeIndexer = this;
+      _edgeDummy = this;
       _dirEdgesCount[IN] = std::vector<uint32_t>(capacity);
       _dirEdgesCount[OUT] = std::vector<uint32_t>(capacity);
     }
@@ -258,6 +261,15 @@ class DiGraphAdjMatrix: public AbstractDirectedGraph<V, E> {
       --_verticesSize;
       return true;
     }
+    
+    void Debug() {
+      for ( int i = 0; i < _verticesSize; ++i ) {
+        for ( int j = 0; j < _verticesSize; ++j ) {
+          std::cout << "" << _edgesMatrix[i][j] << "," ;
+        }
+        std::cout << "" << std::endl;
+      }
+    }
 
   private:
 
@@ -415,8 +427,6 @@ class DiGraphAdjMatrix: public AbstractDirectedGraph<V, E> {
         EdgePtr Next () {
 //           VertexImplPtr row[] = {&(_cursor->second), &_source};
 //           VertexImplPtr col[] = {&_source, &(_cursor->second)};
-          _rowid[IN] = &_cursor->second;
-          _colid[OUT] = &_cursor->second;
           _edge._sv = _rowid[_dir];
           _edge._tv = _colid[_dir];
           _edge._value = &(_owner->_edgesMatrix[_rowid[_dir]->_index][_colid[_dir]->_index]);
@@ -424,6 +434,8 @@ class DiGraphAdjMatrix: public AbstractDirectedGraph<V, E> {
 //           _edge._tv = &(_cursor->second);
 //          _edge._value = &(_owner->_edgesMatrix[_source._index][_cursor->second._index]);
           ++_cursor;
+          _rowid[IN] = &_cursor->second;
+          _colid[OUT] = &_cursor->second;
           NextEdge();
           return &_edge;
         }
@@ -435,12 +447,14 @@ class DiGraphAdjMatrix: public AbstractDirectedGraph<V, E> {
         void Init(VertexImplPtr v) {
           _colid[IN] = v;
           _rowid[OUT] = v;
-        }
-        void NextEdge() {
           _rowid[IN] = &_cursor->second;
           _colid[OUT] = &_cursor->second;
+        }
+        void NextEdge() {
           while ((_cursor != _end) && (_owner->_edgesMatrix[_rowid[_dir]->_index][_colid[_dir]->_index] == _owner->EDGE_NONE)) {
             ++_cursor;
+            _rowid[IN] = &_cursor->second;
+            _colid[OUT] = &_cursor->second;
           }
         }
         typename std::map<V, VertexImpl>::const_iterator _begin;
@@ -467,7 +481,7 @@ class DiGraphAdjMatrix: public AbstractDirectedGraph<V, E> {
         }
         const DiGraphAdjMatrix* _owner;
     };
-    const VertexIndexer _vertexIndexer;
+    VertexIndexer _vertexIndexer;
 
     class EdgeIndexer : public Indexer<EdgePtr> {
       public:
@@ -482,7 +496,7 @@ class DiGraphAdjMatrix: public AbstractDirectedGraph<V, E> {
         }
         const DiGraphAdjMatrix* _owner;
     };
-    const EdgeIndexer _edgeIndexer;
+    EdgeIndexer _edgeIndexer;
 
     class EdgeSourceVertexTransformer : public ITransformer<EdgePtr, VertexPtr> {
       public:

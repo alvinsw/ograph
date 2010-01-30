@@ -38,6 +38,11 @@ class IEdge : public IBase {
     virtual VertexPtr GetTargetVertex() const = 0;
     virtual const V& GetSourceValue() const { return GetSourceVertex()->GetValue(); }
     virtual const V& GetTargetValue() const { return GetTargetVertex()->GetValue(); }
+    virtual bool Equals(const IBase& obj) const { 
+      const IEdge& e = static_cast<const IEdge&>(obj);
+      return (GetValue()==e.GetValue() && GetSourceValue()==e.GetSourceValue() && GetTargetValue()==e.GetTargetValue());
+    }
+
 };
 
 template <typename T>
@@ -92,5 +97,11 @@ class IGraph {
     virtual const Indexer<VertexPtr>& GetVertexIndexer() const = 0;
     virtual const Indexer<EdgePtr>& GetEdgeIndexer() const = 0;
 };
+
+template <typename V, typename E>
+std::ostream& operator<< (std::ostream& out, const IEdge<V,E>& e) {
+  out << "IEdge<V,E>=[" <<  e.GetSourceValue() << "-->" << e.GetTargetValue() << ": " << e.GetValue() << "]";
+  return out;
+}
 
 #endif
