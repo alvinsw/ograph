@@ -31,7 +31,7 @@ const double MAX_Y = 1000;
 // keep the vertices for easy access in a vector
 void GenerateNetworkGraph(IMutableGraph<Vehicle, double>& graph, std::vector< VertexPtr >& vertices, uint32_t num) {
   Random rnd;
-  for (int i=0; i<num; ++i) {
+  for (uint32_t i=0; i<num; ++i) {
         Vehicle v;
         v.pos.x = rnd.NextDouble(0, MAX_X);
         v.pos.y = rnd.NextDouble(0, MAX_Y);
@@ -42,8 +42,8 @@ void GenerateNetworkGraph(IMutableGraph<Vehicle, double>& graph, std::vector< Ve
         VertexPtr vptr = graph.AddVertex(v);
         vertices.push_back(vptr);
     }
-    for (int i=0; i<num; ++i) {
-        for (int j=i+1; j<num; ++j) {
+    for (uint32_t i=0; i<num; ++i) {
+        for (uint32_t j=i+1; j<num; ++j) {
             const Vertex& v1 = *vertices[i];
             const Vertex& v2 = *vertices[j];
 

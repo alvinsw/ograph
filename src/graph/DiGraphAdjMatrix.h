@@ -153,7 +153,7 @@ class DiGraphAdjMatrix: public AbstractDirectedGraph<V, E> {
     }
     
     virtual bool Contains(VertexRef vertex) const {
-      
+      return false;
     }
     
     uint32_t GetCapacity() const {
@@ -163,8 +163,8 @@ class DiGraphAdjMatrix: public AbstractDirectedGraph<V, E> {
 //////////////////////-------MUTABLE OPERATIONS----------///////////////
 
     virtual void SetNoEdgeValue(const E& e) {
-      for ( int i = 0; i < _capacity; ++i ) {
-        for ( int j = 0; j < _capacity; ++j ) {
+      for ( uint32_t i = 0; i < _capacity; ++i ) {
+        for ( uint32_t j = 0; j < _capacity; ++j ) {
           if (_edgesMatrix[i][j] == EDGE_NONE) {
             _edgesMatrix[i][j] = e;
           }
@@ -182,7 +182,7 @@ class DiGraphAdjMatrix: public AbstractDirectedGraph<V, E> {
           //_vertices.resize();
           _capacity = _capacity * 2;
           //const E& edgeNone = EDGE_NONE;
-          for (int i = 0; i < _edgesMatrix.size(); ++i) {
+          for (uint32_t i = 0; i < _edgesMatrix.size(); ++i) {
             _edgesMatrix[i].resize(_capacity, EDGE_NONE);
           }
           _edgesMatrix.resize(_capacity, std::vector<E>(_capacity, EDGE_NONE));
@@ -224,10 +224,10 @@ class DiGraphAdjMatrix: public AbstractDirectedGraph<V, E> {
     };
 
     virtual void RemoveAllEdges() {
-      for ( int i = 0; i < _verticesSize; ++i ) {
+      for (uint32_t i = 0; i < _verticesSize; ++i ) {
         _dirEdgesCount[IN][i] = 0;
         _dirEdgesCount[OUT][i] = 0;
-        for ( int j = 0; j < _verticesSize; ++j ) {
+        for (uint32_t j = 0; j < _verticesSize; ++j) {
           _edgesMatrix[i][j] = EDGE_NONE;
         }
       }
@@ -252,7 +252,7 @@ class DiGraphAdjMatrix: public AbstractDirectedGraph<V, E> {
       VertexImplRef v = AssertVertex( vertex );
       //ASSERT(vertexId >= 0 && vertexId < verticesCount) throw new IndexOutOfBoundsException();
       if (_dirEdgesCount[IN][v._index]==0 && _dirEdgesCount[OUT][v._index]==0) return false;
-      for (int i=0; i<_verticesSize; ++i) {
+      for (uint32_t i=0; i<_verticesSize; ++i) {
         RemoveEdge(v._index, i);
         RemoveEdge(i, v._index);
       }
@@ -269,7 +269,7 @@ class DiGraphAdjMatrix: public AbstractDirectedGraph<V, E> {
         _verticesIndex[id] = _verticesIndex[lid];
         _verticesIndex[id]->_index = id; //update vertex.index
         // swap the edge matrix
-        for (int i=0; i < id; ++i) {
+        for (uint32_t i=0; i < id; ++i) {
           _edgesMatrix[id][i] = _edgesMatrix[lid][i];
           _edgesMatrix[i][id] = _edgesMatrix[i][lid];
           _edgesMatrix[lid][i] = EDGE_NONE;
@@ -277,7 +277,7 @@ class DiGraphAdjMatrix: public AbstractDirectedGraph<V, E> {
         }
         _edgesMatrix[id][id] = _edgesMatrix[lid][lid];
         _edgesMatrix[lid][lid] = EDGE_NONE;
-        for (int i=id+1; i < lid; ++i) {
+        for (uint32_t i=id+1; i < lid; ++i) {
           _edgesMatrix[id][i] = _edgesMatrix[lid][i];
           _edgesMatrix[i][id] = _edgesMatrix[i][lid];
           _edgesMatrix[lid][i] = EDGE_NONE;

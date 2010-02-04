@@ -48,7 +48,7 @@ class AbstractDirectedGraph : public IMutableGraph<V, E> {
       VertexPtr s = GetVertex ( source );
       VertexPtr t = GetVertex ( target );
       if ( s != 0 && t != 0 ) {
-        GetEdgeValue ( *s, *t );
+        return GetEdgeValue ( *s, *t );
       } else {
         throw std::invalid_argument ( "Source or target vertex does not belong to this graph." );
       }

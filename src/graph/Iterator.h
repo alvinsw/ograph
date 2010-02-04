@@ -30,7 +30,7 @@ class IteratorTransform : public virtual IIterator<T2> {
       return _iter->HasNext();
     }
     virtual T2 Next() {
-      _t(_iter->Next());
+      return _t(_iter->Next());
     }
     virtual IIterator<T2>* Clone() {
       return ( new IteratorTransform(*this) );
