@@ -22,31 +22,34 @@
 
 #include <limits>
 
-#include "IPriorityQueue.h"
 #include "Marker.h"
 #include "IGraph.h"
+#include "IndexedArrayPriorityQueue.h"
 #include <iostream>
+#include <cassert>
 
 template <typename T>
 class IVisitor {
   virtual void operator()(const T& t) const = 0;
 };
 
-
 /**
  * W is the type of weight, must be number (int, long, double, etc)
+ * DijkstraShortestPath will fins a path with the least weight W
  */
-template <typename V, typename E, typename W, 
+template <typename V, typename E, typename W>
 //          typename TVertexMarker = IndexedArrayMarker , 
-          template <typename Y, typename X> class TVertexMarker = IndexedArrayMarker, 
-          typename TPriorityQueue = IndexedArrayPriorityQueue<const IVertex<V, E>*, W> >
+//          template <typename Y, typename X> class TVertexMarker = IndexedArrayMarker, 
+//          typename TPriorityQueue = IndexedArrayPriorityQueue<const IVertex<V, E>*, Comparator> >
 class DijkstraShortestPath {
-  typedef typename TPriorityQueue::instanceOfPriorityQueue PriorityQueue_extends_IPriorityQueue;
+  //typedef typename TPriorityQueue::instanceOfPriorityQueue PriorityQueue_extends_IPriorityQueue;
   //typedef typename VT::instanceOfTransformer VT_extends_ITransformer;
   //typedef typename TVertexMarker::Parameters TVMParams;
-  typedef typename TPriorityQueue::Parameters TPQParams;
+  //typedef typename TPriorityQueue::Parameters TPQParams;
   //typedef typename ET::instanceOfTransformer ET_extends_ITransformer;
   public:
+    //T=VertexPtr  : public binary_function<VertexPtr, VertexPtr, bool>
+    
     typedef IVertex<V, E> Vertex;
     typedef IEdge<V, E> Edge;
     typedef const IVertex<V, E>* VertexPtr;
@@ -62,29 +65,29 @@ class DijkstraShortestPath {
      * Just create a new object, and the DijkstraShortestPath object will handle the delete.
      * Example: DijkstraShortestPath dsp(graph, marker, new XXXPriorityQueue(p1,p1,xxx));
      */
-    DijkstraShortestPath(const IGraph<V, E>& g, const IMarker<EdgePtr, W>* edgeWeightMarker = 0, const TPQParams* pqp = 0) 
-                         : _g(&g), _ewm(edgeWeightMarker), INFINITY(std::numeric_limits<W>::max()), defaultEdgeWeightMarker()
+    DijkstraShortestPath(const IGraph<V, E>& g, const IMarker<EdgePtr, W>* edgeWeightMarker = 0) 
+                         : _g(&g), _ewm(edgeWeightMarker), INFINITY(std::numeric_limits<W>::max()), defaultEdgeWeightMarker(), _comp()
     {
-      if (pqp==0) { 
-        _pq = TPriorityQueue(TPQParams(g.GetVertexIndexer()));
-      } else {
-        _pq = TPriorityQueue(*pqp);
-      }
+      _pq = new TPriorityQueue(g.VerticesSize(), &g.GetVertexIndexer(), _comp);
       if (_ewm==0) { _ewm = &defaultEdgeWeightMarker; }
       //INFINITY = ;
     }
     
     virtual ~DijkstraShortestPath() {
+      delete _pq;
     }
     //DijkstraShortestPath(const IGraph<V, E>& g, const IMarker<E, W>& edgeWeightMarker, IPriorityQueue<V, W>& pq) {}
 //     void Run(const Graph::Vertex& s, IVisitor<V>& initVertex = _vv, IVisitor<V>& examineVertex = _vv, IVisitor<E>& examineEdge = _ev,
 //              IVisitor<V>& discoverVertex = _vv, IVisitor<E>& edgeRelaxed = _ev, IVisitor<E>& edgeNotRelaxed = _ev, IVisitor<V>& finishVertex = _vv) {
     void Run(const IVertex<V, E>& s) {
+      TPriorityQueue& pq = *_pq;
       const Indexer<VertexPtr>* indexer = &_g->GetVertexIndexer();
       uint32_t size = indexer->GetLastIndex()+1;
-      TVertexMarker<VertexPtr, W> dist(size, indexer); // distance marker
-      TVertexMarker<VertexPtr, VertexPtr> prev(size, indexer); // predecessor marker
-      TVertexMarker<VertexPtr, Color> visited(size, indexer); // visited marker
+      IndexedArrayMarker<VertexPtr, W> dist(size, indexer); // distance marker
+      IndexedArrayMarker<VertexPtr, VertexPtr> prev(size, indexer); // predecessor marker
+      IndexedArrayMarker<VertexPtr, Color> visited(size, indexer); // visited marker
+      //_comp.marker = &dist;
+      pq.GetComparator().marker = &dist;
       // init
       VertexIterator i = _g->GetVertices();
       VertexPtr sptr = &s;
@@ -94,10 +97,12 @@ class DijkstraShortestPath {
         prev.Set(vptr, 0);
         visited.Set(vptr, WHITE);
       }
+      
       dist.Set(sptr, 0);
-      _pq.Push(sptr, 0);
-      while (!_pq.Empty()){
-        VertexPtr uptr = _pq.Poll(); //vertex in Q with smallest dist[]
+      pq.Push(sptr);
+      while (!pq.Empty()){
+        VertexPtr uptr = pq.Poll(); //vertex in Q with smallest dist[]
+        std::cout << "uptr:" << uptr->GetValue() << std::endl;
         if (dist.Get(uptr) == INFINITY) break; // all remaining vertices are inaccessible from source
         visited.Set(uptr, BLACK); // put in the finished set S<--u
         // for each
@@ -113,9 +118,9 @@ class DijkstraShortestPath {
               prev.Set(vptr, uptr);
               if (color == WHITE) {
                 visited.Set(vptr, GRAY);
-                _pq.Push(vptr, alt);
+                pq.Push(vptr);
               } else { //else if gray
-                _pq.Update(vptr, alt);
+                pq.Update(vptr);
               }
             }
           }
@@ -155,6 +160,17 @@ class DijkstraShortestPath {
         void Set(const EdgePtr& key, const W& value) { }
     };
     const DefaultEdgeWeightMarker defaultEdgeWeightMarker;
+
+    struct VertexPtrComp {
+      VertexPtrComp() : marker(0) {}
+      bool operator() (const VertexPtr& x, const VertexPtr& y) const {
+        assert(marker!=0);
+        return (marker->Get(x))>(marker->Get(y));
+      }
+      IMarker<VertexPtr, W>* marker;
+    };
+    typedef IndexedArrayPriorityQueue<VertexPtr, VertexPtrComp> TPriorityQueue;
+    
     
 /*    class VertexPtrToUInt32Transformer : public ITransformer<IVertex<V, E>*, uint32_t> {
       public:
@@ -167,8 +183,10 @@ class DijkstraShortestPath {
     //void Init(IGraph<V, E>* g, IMarker<E, W>& edgeWeightMarker, IPriorityQueue<V, W>& pq) {    }
     const IGraph<V, E>* _g;
     const IMarker<EdgePtr, W>* _ewm; // edge weight
-    TPriorityQueue _pq;
+    TPriorityQueue* _pq;
     const W INFINITY;
+    VertexPtrComp _comp;
+
 };
 
 #endif // DIJKSTRASHORTESTPATH_H

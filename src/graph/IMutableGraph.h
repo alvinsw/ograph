@@ -40,6 +40,7 @@ class IMutableGraph : public virtual IGraph<V, E> {
     virtual VertexPtr AddVertex(const V& v) = 0;
     
     /** 
+      * edge value must not be the same with the value returned by NoEdge() method.
       * Returns a pointer to a dummy internal edge object. It is only used as a mean to get the VertexPtr of source and target and the value
       * Copy the edge object values to other variables before calling any other methods that involve returning an edge.
       */

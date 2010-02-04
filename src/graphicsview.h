@@ -32,6 +32,7 @@ class QGraphicsSceneMouseEvent;
 class Node : public QGraphicsItem {
 public:
     Node(GraphicsView *graphicsView);
+    Node(GraphicsView *graphicsView, uint id);
     void addEdge(Edge *edge);
     QList<Edge *> edges() const;
     enum { Type = UserType + 1 };
@@ -49,6 +50,7 @@ protected:
 
 private:
     QList<Edge *> edgeList;
+    uint _id;
 };
 
 

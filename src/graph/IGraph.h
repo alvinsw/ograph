@@ -45,16 +45,11 @@ class IEdge : public IBase {
 
 };
 
-template <typename T>
-class Indexer : public ITransformer<T, uint32_t> {
-  public:
-    //virtual uint32_t operator()(const T& t) = 0;
-    virtual uint32_t GetLastIndex() const = 0;
-};
-
 template <typename V, typename E>
 class IGraph {
   public:
+    typedef V VType;
+    typedef E EType;
     typedef IVertex<V, E> Vertex;
     typedef IEdge<V, E> Edge;
     typedef const IVertex<V, E>* VertexPtr;
@@ -76,7 +71,7 @@ class IGraph {
     /** Gets the vertex descriptor, return 0 if it is not found. IVertex is an object managed by the graph, do not delete! */
     virtual VertexPtr GetVertex (const V& v) const = 0; //
     virtual const V& GetVertexValue (VertexRef vertex) const = 0; //
-    virtual const E& GetEdgeValue (VertexRef sourceVertex, VertexRef targetVertex ) const = 0; //
+    virtual const E& GetEdgeValue (VertexRef sourceVertex, VertexRef targetVertex) const = 0; //
     virtual const E& GetEdgeValue (const V& source, const V& target) const = 0; //
 
     virtual VertexIterator GetVertices() const = 0; //
@@ -96,6 +91,9 @@ class IGraph {
 //    virtual IMarker<Vertex, T>* CreateVertexMarker() const {};
     virtual const Indexer<VertexPtr>& GetVertexIndexer() const = 0;
     virtual const Indexer<EdgePtr>& GetEdgeIndexer() const = 0;
+    virtual bool Contains(VertexRef vertex) const = 0;
+    virtual bool Contains(VertexRef sourceVertex, VertexRef targetVertex) const = 0;
+    
 };
 
 template <typename V, typename E>

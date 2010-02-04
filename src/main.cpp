@@ -20,15 +20,16 @@ struct Vehicle {
     float delay;
 };
 
-typedef const IVertex<Vehicle, double> Vertex;
+typedef IVertex<Vehicle, double> Vertex;
 typedef const IVertex<Vehicle, double>* VertexPtr;
+typedef const IEdge<Vehicle, double>* EdgePtr;
 typedef IEdge<Vehicle, double> Edge;
 
 const double MAX_X = 1000;
 const double MAX_Y = 1000;
 
 // keep the vertices for easy access in a vector
-void GenerateNetworkGraph(IMutableGraph<Vehicle, double>& graph, std::vector< Vertex* >& vehicles, uint32_t num) {
+void GenerateNetworkGraph(IMutableGraph<Vehicle, double>& graph, std::vector< VertexPtr >& vertices, uint32_t num) {
   Random rnd;
   for (int i=0; i<num; ++i) {
         Vehicle v;
@@ -38,13 +39,13 @@ void GenerateNetworkGraph(IMutableGraph<Vehicle, double>& graph, std::vector< Ve
         v.radioRangeSqr = v.radioRangeSqr * v.radioRangeSqr;
         v.delayConstraint = 100 + rnd.NextInt(100);
         v.delay = 1 + rnd.NextInt(100);
-	VertexPtr vptr = graph.AddVertex(v);
-        vehicles.push_back(vptr);
+        VertexPtr vptr = graph.AddVertex(v);
+        vertices.push_back(vptr);
     }
     for (int i=0; i<num; ++i) {
         for (int j=i+1; j<num; ++j) {
-            Vertex& v1 = *vehicles[i];
-            Vertex& v2 = *vehicles[j];
+            const Vertex& v1 = *vertices[i];
+            const Vertex& v2 = *vertices[j];
 
             double dx = v1.GetValue().pos.x - v2.GetValue().pos.x;
             double dy = v1.GetValue().pos.y - v2.GetValue().pos.y;
@@ -63,49 +64,23 @@ void GenerateNetworkGraph(IMutableGraph<Vehicle, double>& graph, std::vector< Ve
 
 int main(int argc, char** argv)
 {
+    static const int count = 10;
     typedef DiGraphAdjMatrix<int, int> graph;
-    graph g;
-    int count = 10;
-    graph::VertexPtr vptr[count];
+    graph g(count, -1);
+    graph::VertexPtr vps[count];
     for (int i=0; i < count; ++i) {
-      vptr[i] = g.AddVertex(i);
-      std::cout << "size: " << g.VerticesSize() << std::endl;
+      vps[i] = g.AddVertex(i);
     }
 
-    graph::VertexIterator vi = g.GetVertices();
-    while (vi.HasNext()) {
-      graph::VertexPtr v = vi.Next();
-      graph::EdgePtr e = g.AddEdge(*vptr[0], *v, 9);
-      std::cout << "add edge: " << *e << std::endl;
-    }
-    
-    std::cout << "v size: " << g.VerticesSize() << std::endl;
-    std::cout << "e size: " << g.EdgesSize() << std::endl;
-    //g.Clear();
-    std::cout << "v size: " << g.VerticesSize() << std::endl;
-    std::cout << "e size: " << g.EdgesSize() << std::endl;
-    vi = g.GetVertices();
-    while (vi.HasNext()) {
-      std::cout << "vertex: " << vi.Next()->GetValue() << std::endl;
-    }
-    //std::cout << "v2=" << v2->GetValue() <<std::endl;
-    g.AddEdge(*vptr[3], *vptr[1], 7);
-    g.AddEdge(*vptr[3], *vptr[5], 7);
-    g.AddEdge(*vptr[3], *vptr[8], 7);
-    //g.Debug();
-    graph::EdgeIterator ei = g.GetOutEdges(*vptr[3]);
-    //graph::EdgeIterator ei = g.GetEdges();
-    //std::cout << "test1" << std::endl;
-    while (ei.HasNext()) {
-      graph::EdgePtr e = ei.Next();
-      std::cout << *e << std::endl;
+    for (int i=0; i<count; ++i) {
+      for (int j=0; j<count; ++j) {
+        if (i!=j) graph::EdgePtr e = g.AddEdge(*vps[i], *vps[j], 1);
+      }
     }
 
-    g.Clear();
-//     QApplication app(argc, argv);
-//     MainWindow w;
-//     w.show();
-//     return app.exec();
-    //std::map<int, std::string> m;
-    return 0;
+    QApplication app(argc, argv);
+    MainWindow w;
+    w.show();
+    return app.exec();
+    //return 0;
 }

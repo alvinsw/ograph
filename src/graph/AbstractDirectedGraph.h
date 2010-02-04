@@ -74,6 +74,10 @@ class AbstractDirectedGraph : public IMutableGraph<V, E> {
       }
       return 0;
     }
+    
+    virtual bool Contains(VertexRef sourceVertex, VertexRef targetVertex) const {
+      return (GetEdgeValue(sourceVertex, targetVertex)!=NoEdge());
+    }
 
     /////////////IMutableGraph
 

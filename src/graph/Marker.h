@@ -28,13 +28,12 @@ class IndexedArrayMarker : public IMarker<K, V> {
       uint32_t capacity;
     };
     
-    AnyToUInt32Transformer<K> defaultTransformer;
     
-    IndexedArrayMarker(const Parameters& params) : _vals(params.capacity), _to_uint32(params.indexer), _def_val(V()) { }
+    explicit IndexedArrayMarker(const Parameters& params) : _vals(params.capacity), _to_uint32(params.indexer), _def_val(V()) { }
     /** This object will not delete the transformer */
-    IndexedArrayMarker(uint32_t size = 0, const ITransformer<K, uint32_t>* to_uint32 = 0) : _vals(size), _to_uint32(to_uint32), _def_val(V()) { 
+    explicit IndexedArrayMarker(uint32_t size = 0, const Indexer<K>* to_uint32 = 0) : _vals(size), _to_uint32(to_uint32), _def_val(V()) { 
       if (to_uint32 == 0) {
-        _to_uint32 = &defaultTransformer;
+        _to_uint32 = &defaultIndexer;
       }
     }
     V Get(const K& key) const {
@@ -50,7 +49,8 @@ class IndexedArrayMarker : public IMarker<K, V> {
   private:
     V _def_val;
     std::vector<V> _vals;
-    const ITransformer<K, uint32_t>* _to_uint32;
+    const Indexer<K>* _to_uint32;
+    AnyIndexer<K> defaultIndexer;
     
 };
 
