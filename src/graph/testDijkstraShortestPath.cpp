@@ -32,6 +32,27 @@ int main() {
   //g.Debug();
   DijkstraShortestPath<std::string, int, int> dsp(g);
   dsp.Run(*s);
+  std::cout << "" << std::endl;
+  TreeSet<Graph::VertexPtr> set;
+  set.Add(v3);
+  set.Add(v2);
+  set.Add(v1);
+  Iterator<Graph::VertexPtr> iter = set.GetIterator();
+  while (iter.HasNext()) {
+    std::cout << "set:" << iter.Next()->GetValue() << std::endl;
+  }
+  
+  TreeSet<int> set1;
+  set1.Add(3);
+  set1.Add(2);
+  set1.Add(1);
+  Iterator<int> iter1 = set1.GetIterator();
+  while (iter1.HasNext()) {
+    std::cout << "set1:" << iter1.Next() << std::endl;
+  }
+
+  dsp.Run(*s, set);
+  
   
   // use hashtable mapper for the vertex marker
 //   HashtableMarker<Graph::Vertex*, double>::Parameters param1();

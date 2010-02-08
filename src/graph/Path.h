@@ -21,11 +21,12 @@
 #define IPATH_H
 
 #include "IGraph.h"
+#include <list>
 
-
-class IPath : public IGraph {
+template <typename V, typename E>
+class Path : public IGraph {
   public:
-    virtual ~IPath();
+    virtual ~Path();
     virtual bool Contains(VertexRef sourceVertex, VertexRef targetVertex) const {return false;}
     virtual bool Contains(VertexRef vertex) const {return false;}
     virtual const Indexer< EdgePtr >& GetEdgeIndexer() const;
@@ -50,6 +51,20 @@ class IPath : public IGraph {
     virtual bool IsParallel();
     virtual bool IsDirected();
     virtual const E& NoEdge() const;
+};
+
+template <typename T>
+class ListPath {
+  public:
+    void AddFront(const T& t) {
+      _list.push_front(t);
+    }
+    void AddBack(const T& t) {
+      _list.push_back(t);
+    }
+    
+  private:
+    std::list<T> _list;
 };
 
 #endif // IPATH_H

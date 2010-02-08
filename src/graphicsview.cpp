@@ -25,6 +25,7 @@
 #include <QGraphicsSceneMouseEvent>
 #include <QPainter>
 #include <QStyleOption>
+#include "globals.h"
 
 
 GraphicsView::GraphicsView(QWidget* parent): QGraphicsView(parent) {
@@ -46,39 +47,36 @@ IGraph<Vehicle, double>::
     VertexPtr vp = vi.Next();
     
   }*/
-  Node *node1 = new Node(this, 1);
-  Node *node2 = new Node(this, 2);
-  Node *node3 = new Node(this, 3);
-  Node *node4 = new Node(this);
-  Node *node6 = new Node(this);
-  Node *node7 = new Node(this);
-  Node *node8 = new Node(this);
-  Node *node9 = new Node(this);
-  scene->addItem(node1);
-  scene->addItem(node2);
-  scene->addItem(node3);
-  scene->addItem(node4);
-  scene->addItem(node6);
-  scene->addItem(node7);
-  scene->addItem(node8);
-  scene->addItem(node9);
-  scene->addItem(new Edge(node1, node2));
-  scene->addItem(new Edge(node2, node3));
-  scene->addItem(new Edge(node3, node6));
-  scene->addItem(new Edge(node4, node1));
-  scene->addItem(new Edge(node6, node9));
-  scene->addItem(new Edge(node7, node4));
-  scene->addItem(new Edge(node8, node7));
-  scene->addItem(new Edge(node9, node8));
-
-  node1->setPos(-50, -50);
-  node2->setPos(0, -50);
-  node3->setPos(50, -50);
-  node4->setPos(-50, 0);
-  node6->setPos(50, 0);
-  node7->setPos(-50, 50);
-  node8->setPos(0, 50);
-  node9->setPos(50, 50);
+  uint32_t num = 20;
+  TGraph g(num, -1.0f);
+  std::vector<TVertexPtr> vertices;
+  GenerateNetworkGraph(g, vertices, num);
+  
+  QVector<Node*> nodes(num);
+  TGraph::VertexIterator viter = g.GetVertices();
+  while (viter.HasNext()) {
+    TVertexPtr vptr = viter.Next();
+    uint32_t id = vptr->GetValue().id;
+    nodes[id] = new Node(this, id);
+    Point p = vptr->GetValue().pos;
+    nodes[id]->setPos(p.x, p.y);
+    scene->addItem(nodes[id]);
+  }
+  TGraph::EdgeIterator eiter = g.GetEdges();
+  while (eiter.HasNext()) {
+    TEdgePtr eptr = eiter.Next();
+    uint32_t id1 = eptr->GetSourceValue().id;
+    uint32_t id2 = eptr->GetTargetValue().id;
+    scene->addItem(new Edge(nodes[id1], nodes[id2]));
+  }
+  
+//   Node* node1 = new Node(this, 1);
+//   Node* node2 = new Node(this, 2);
+//   scene->addItem(node1);
+//   scene->addItem(node2);
+//   scene->addItem(new Edge(node1, node2));
+//   node1->setPos(10, 10);
+//   node2->setPos(50, 50);
 
   setScene(scene);
   setRenderHint(QPainter::Antialiasing);
@@ -314,17 +312,17 @@ void Edge::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *)
   if (line.dy() >= 0)
     angle = TwoPi - angle;
 
-  QPointF sourceArrowP1 = sourcePoint + QPointF(sin(angle + Pi / 3) * arrowSize,
+/*  QPointF sourceArrowP1 = sourcePoint + QPointF(sin(angle + Pi / 3) * arrowSize,
                           cos(angle + Pi / 3) * arrowSize);
   QPointF sourceArrowP2 = sourcePoint + QPointF(sin(angle + Pi - Pi / 3) * arrowSize,
-                          cos(angle + Pi - Pi / 3) * arrowSize);
+                          cos(angle + Pi - Pi / 3) * arrowSize);*/
   QPointF destArrowP1 = destPoint + QPointF(sin(angle - Pi / 3) * arrowSize,
                         cos(angle - Pi / 3) * arrowSize);
   QPointF destArrowP2 = destPoint + QPointF(sin(angle - Pi + Pi / 3) * arrowSize,
                         cos(angle - Pi + Pi / 3) * arrowSize);
 
   painter->setBrush(Qt::black);
-  painter->drawPolygon(QPolygonF() << line.p1() << sourceArrowP1 << sourceArrowP2);
+  //painter->drawPolygon(QPolygonF() << line.p1() << sourceArrowP1 << sourceArrowP2);
   painter->drawPolygon(QPolygonF() << line.p2() << destArrowP1 << destArrowP2);
 }
 

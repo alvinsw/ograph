@@ -36,11 +36,11 @@ int main() {
   pq2.Push(5);
   pq2.Push(1);
   pq2.Push(3);
-  pq2.Push(8);
+  PriorityQueue<int>::Iterator i = pq2.Push(8);
   pq2.Push(4);
-  
+  pq2.Update(i,2);
+  pq2.Update(i,20);
   while (!pq2.Empty()) {
     cout << "poll:" << pq2.Poll() << endl;
   }
-  
 }

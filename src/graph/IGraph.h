@@ -63,9 +63,9 @@ class IGraph {
     virtual ~IGraph() { }
     
     virtual const E& NoEdge() const = 0; //
-    virtual bool IsDirected() = 0; //
-    virtual bool IsParallel() = 0; //
-    virtual bool IsLoop() = 0; //
+    virtual bool IsDirected() const = 0; //
+    virtual bool IsParallel() const = 0; //
+    virtual bool IsLoop() const = 0; //
     virtual uint32_t VerticesSize() const = 0; //
     virtual uint32_t EdgesSize() const = 0; //
     /** Gets the vertex descriptor, return 0 if it is not found. IVertex is an object managed by the graph, do not delete! */
@@ -86,7 +86,7 @@ class IGraph {
     virtual VertexIterator GetSuccessor (VertexRef vertex ) const = 0;
     virtual uint32_t InDegree(VertexRef vertex) const = 0;
     virtual uint32_t OutDegree(VertexRef vertex) const = 0;
-    virtual VertexPtr GetOpposite(VertexRef vertex, EdgeRef edge ) = 0;
+    virtual VertexPtr GetOpposite(VertexRef vertex, EdgeRef edge) const = 0;
 //    template <typename T>
 //    virtual IMarker<Vertex, T>* CreateVertexMarker() const {};
     virtual const Indexer<VertexPtr>& GetVertexIndexer() const = 0;

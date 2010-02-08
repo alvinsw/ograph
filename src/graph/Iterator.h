@@ -41,6 +41,31 @@ class IteratorTransform : public virtual IIterator<T2> {
     IIterator<T1>* _iter;
     const ITransformer<T1,T2>& _t;
 };
+
+template <typename T, typename TStlIter>
+class StlIteratorWrapper: public IIterator<T> {
+  public:
+    StlIteratorWrapper(const TStlIter& begin, const TStlIter& end) : _cursor(begin), _end(end)  {}
+    virtual ~StlIteratorWrapper() { }
+    virtual bool HasNext() {
+      return ( _cursor != _end );
+    }
+    virtual T Next() {
+      T t = *_cursor;
+      ++_cursor;
+      return t;
+    }
+    /** Returns a new object which is the exact copy of this object */
+    virtual IIterator<T>* Clone() {
+      return ( new StlIteratorWrapper(*this) );
+    }
+  private:
+    TStlIter _cursor;
+    TStlIter _end;
+};
+
+
+
 // template<typename T>
 // struct IteratorRef
 // {

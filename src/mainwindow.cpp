@@ -1,11 +1,14 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include <iostream>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    connect(ui->pushButtonGen, SIGNAL(clicked()), this, SLOT(generateGraph()));
+    
 }
 
 MainWindow::~MainWindow()
@@ -24,5 +27,10 @@ void MainWindow::changeEvent(QEvent *e)
         break;
     }
 }
+
+void MainWindow::generateGraph() {
+  std::cout << "test" << std::endl;
+}
+
 
 #include "moc_mainwindow.cpp"

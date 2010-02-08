@@ -30,9 +30,9 @@ class AbstractDirectedGraph : public IMutableGraph<V, E> {
 //     using IMutableGraph<V, E>::AddVertex;
 
     virtual const E& NoEdge() const { return EDGE_NONE; }
-    virtual bool IsDirected() { return true; }
-    virtual bool IsParallel() { return false; } //does not allow parallel edges
-    virtual bool IsLoop() { return true; } // allow loops
+    virtual bool IsDirected() const { return true; }
+    virtual bool IsParallel() const { return false; } //does not allow parallel edges
+    virtual bool IsLoop() const { return true; } // allow loops
 
     virtual uint32_t VerticesSize() const = 0; //
     virtual uint32_t EdgesSize() const = 0; //
@@ -66,7 +66,7 @@ class AbstractDirectedGraph : public IMutableGraph<V, E> {
     virtual uint32_t InDegree(VertexRef vertex) const = 0;
     virtual uint32_t OutDegree(VertexRef vertex) const = 0;
 
-    virtual VertexPtr GetOpposite(VertexRef vertex, EdgeRef edge ) {
+    virtual VertexPtr GetOpposite(VertexRef vertex, EdgeRef edge ) const {
       if (edge.GetSourceVertex()->Equals(vertex)) {
         return edge.GetTargetVertex();
       } else if (edge.GetTargetVertex()->Equals(vertex)) {
