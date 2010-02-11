@@ -11,11 +11,12 @@ class Random {
     int NextInt() {
       return rand();
     }
+    /** max is exclusive. example: NextInt(2) will give random result of 0 and 1 */
     int NextInt(int max) {
       return NextInt(0, max);
     }
     int NextInt(int min, int max) {
-      return ((rand() * ((max - min) / RAND_MAX)) + min);
+      return ((rand() * (double(max - min) / RAND_MAX)) + min);
     }
     double NextDouble() {
       return ( double(rand()) / double(RAND_MAX) );
