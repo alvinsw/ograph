@@ -8,6 +8,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     connect(ui->pushButtonGen, SIGNAL(clicked()), this, SLOT(generateGraph()));
+    connect(ui->pushButtonGen, SIGNAL(clicked()), this, SLOT(testSlot()));
     
 }
 

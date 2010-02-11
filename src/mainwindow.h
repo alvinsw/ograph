@@ -13,8 +13,9 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = 0);
     ~MainWindow();
-  public slots:
+public slots:
     void generateGraph();
+    void testSlot();
 protected:
     void changeEvent(QEvent *e);
 private:

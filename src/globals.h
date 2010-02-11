@@ -16,6 +16,7 @@ struct Point {
 struct Vehicle {
   uint32_t id;
   Point pos;
+  double radioRange;
   double radioRangeSqr;
   float delayConstraint;
   float delay;
@@ -33,23 +34,71 @@ typedef const IEdge<Vehicle, double>* TEdgePtr;
 typedef IEdge<Vehicle, double> TEdge;
 typedef DiGraphAdjMatrix<Vehicle, double> TGraph;
 
-const double MAX_X = 500;
-const double MAX_Y = 500;
-const double minRadioRange = 300;
-const double maxRadioRange = 500;
+const double MIN_X = 0;
+const double MIN_Y = 0;
+const double MAX_X = 1000;
+const double MAX_Y = 1000;
+const double minRadioRange = 200;
+const double maxRadioRange = 300;
+const double MIN_DIST = 50;
 
+bool CheckMinDistance() {
+}
 // keep the vertices for easy access in a vector
-void GenerateNetworkGraph(IMutableGraph<Vehicle, double>& graph, std::vector< TVertexPtr >& vertices, uint32_t num) {
+template <typename T>
+void GenerateNetworkGraph(IMutableGraph<Vehicle, double>& graph, std::vector< TVertexPtr >& vertices, 
+                          uint32_t num, T minDistance, T minRange, T maxRange, T minX, T maxX, T minY, T maxY) {
   Random rnd;
-  for (uint32_t i=0; i<num; ++i) {
+  if (num > 0) { // create first node
+      Vehicle v;
+      v.id = 0;
+      v.radioRange = minRange + rnd.NextInt(maxRange-minRange);
+      v.radioRangeSqr = v.radioRange * v.radioRange;
+      v.delayConstraint = 100 + rnd.NextInt(100);
+      v.delay = 1 + rnd.NextInt(100);
+      v.pos.x = rnd.NextDouble(minX, maxX);
+      v.pos.y = rnd.NextDouble(minY, maxY);
+      TVertexPtr vptr = graph.AddVertex(v);
+      vertices.push_back(vptr);
+  }
+  for (uint32_t i=1; i<num; ++i) {
         Vehicle v;
         v.id = i;
-        v.pos.x = rnd.NextDouble(0, MAX_X);
-        v.pos.y = rnd.NextDouble(0, MAX_Y);
-        v.radioRangeSqr = minRadioRange + rnd.NextInt(maxRadioRange-minRadioRange);
-        v.radioRangeSqr = v.radioRangeSqr * v.radioRangeSqr;
+        v.radioRange = minRange + rnd.NextInt(maxRange-minRange);
+        v.radioRangeSqr = v.radioRange * v.radioRange;
         v.delayConstraint = 100 + rnd.NextInt(100);
         v.delay = 1 + rnd.NextInt(100);
+        T minDistanceSqr = minDistance * minDistance;
+        T x, y, m;
+        bool minDistOk = false;
+        do {
+          int vid = rnd.NextInt(i); // pick existing node
+          //find min max pos
+          T xp = vertices[vid]->GetValue().pos.x;
+          T yp = vertices[vid]->GetValue().pos.y;
+          T rp = vertices[vid]->GetValue().radioRange;
+          T minx = std::max(xp-rp, minX);
+          T maxx = std::min(xp+rp, maxX);
+          T miny = std::max(yp-rp, minY);
+          T maxy = std::min(yp+rp, maxY);
+          x = rnd.NextDouble(minx, maxx);
+          y = rnd.NextDouble(miny, maxy);
+          T dx = x - xp;
+          T dy = y - yp;
+          m = dx*dx + dy*dy;
+          if (m > v.radioRangeSqr) continue;
+          minDistOk = true;
+          for (uint32_t j = 0; j < vertices.size(); ++j) {
+            T x2 = vertices[j]->GetValue().pos.x;
+            T y2 = vertices[j]->GetValue().pos.y;
+            T dx2 = x - x2;
+            T dy2 = y - y2;
+            T d = dx2*dx2 + dy2*dy2;
+            if (d < minDistanceSqr) minDistOk = false;
+          }
+        } while (!minDistOk || m > v.radioRangeSqr);
+        v.pos.x = x;
+        v.pos.y = y;
         TVertexPtr vptr = graph.AddVertex(v);
         vertices.push_back(vptr);
     }

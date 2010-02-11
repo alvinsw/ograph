@@ -32,7 +32,7 @@ GraphicsView::GraphicsView(QWidget* parent): QGraphicsView(parent) {
   qsrand(QTime(0,0,0).secsTo(QTime::currentTime()));
 
   QGraphicsScene *scene = new QGraphicsScene(this);
-  scene->setSceneRect(0, 0, 1000, 1000);
+  scene->setSceneRect(-50, -50, MAX_X+50, MAX_Y+50);
   scene->setItemIndexMethod(QGraphicsScene::NoIndex);
   //QGraphicsRectItem *rect = scene->addRect(QRectF(0, 0, 100, 100));
 
@@ -47,10 +47,10 @@ IGraph<Vehicle, double>::
     VertexPtr vp = vi.Next();
     
   }*/
-  uint32_t num = 20;
+  uint32_t num = 100;
   TGraph g(num, -1.0f);
   std::vector<TVertexPtr> vertices;
-  GenerateNetworkGraph(g, vertices, num);
+  GenerateNetworkGraph(g, vertices, num, MIN_DIST, minRadioRange, maxRadioRange, MIN_X,MAX_X, MIN_Y,MAX_Y);
   
   QVector<Node*> nodes(num);
   TGraph::VertexIterator viter = g.GetVertices();
@@ -232,9 +232,10 @@ void Node::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
 
 static const double Pi = 3.14159265358979323846264338327950288419717;
 static double TwoPi = 2.0 * Pi;
+static qreal ARROW_SIZE = 5;
 
 Edge::Edge(Node *sourceNode, Node *destNode)
-    : arrowSize(10) {
+    : arrowSize(ARROW_SIZE) {
   setAcceptedMouseButtons(0);
   source = sourceNode;
   dest = destNode;
