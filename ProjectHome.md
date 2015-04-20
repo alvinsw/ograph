@@ -1,0 +1,1 @@
+I find that boost graph library is too complicated and not easy to use, moreover to extend, because of overuse of templates. This project aims to create an easy-to-use-and-extend graph library using object-oriented principles.
